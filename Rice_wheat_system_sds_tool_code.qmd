@@ -1,0 +1,115 @@
+---
+title: "Rice-Wheat System Spatial Decision Support Tool"
+format: 
+    html:
+      code-fold: true
+      code-tools: true
+fig-dpi: 300
+fig-width: 8.88
+fig-align: center
+fig-height: 5
+
+self-contained: true
+author: Maxwell Mkondiwa (m.mkondiwa@cgiar.org), Anton Urfels and Terry Hurley
+
+editor: visual
+toc: true
+toc-location: left
+number-sections: true
+execute: 
+  message: false
+  warning: false
+  echo: true
+---
+
+# Introduction
+We present a rice-wheat systen spatial decisionb support tool which relies on data from the matched landscape crop assessment surveys in eastern India and a multivariate geoadditive Bayesian model to predict entry points for system optimization in the area of interest. 
+
+
+# Crop specific regressions
+```{r}
+library(sp)
+library(mgcv)
+library(bamlss)
+
+# Multivariate geoadditive model
+# remotes::install_git("https://git.uibk.ac.at/c4031039/mvnchol")
+# library(mvnchol)
+library(BayesX)
+library(R2BayesX)
+library(sf)
+library(spdep)
+library(rio)
+Irrig_Rev_rice_wheat <- import("data/Irrig_Rev_rice_wheat.csv")
+
+
+shpname <- file.path(getwd(), "shp", "India_aoi_sf_sp")
+India_aoi_sp_bnd <- BayesX::shp2bnd(shpname = shpname, regionnames = "District", check.is.in = F)
+
+
+
+f_rice_yield_MRF <- list(
+    b_grain_yield_ton_per_ha_rice ~ 1 + rice_duration_class_long + s(sowdate_fmt_rice_day) + s(g_q5305_irrig_times_rice) + s(nperha_rice) + s(p2o5perha_rice) + s(District, bs = "mrf", xt = list("penalty" = K)) +
+        s(District, bs = "re"),
+    sigma ~ 1 + rice_duration_class_long + s(sowdate_fmt_rice_day) + s(g_q5305_irrig_times_rice) + s(nperha_rice) + s(p2o5perha_rice) + s(District, bs = "mrf", xt = list("penalty" = K)) +
+        s(District, bs = "re")
+)
+
+
+
+K <- neighbormatrix(India_aoi_sp_bnd)
+head(K)
+
+## Also need to transform to factor for
+## setting up the MRF smooth.
+Irrig_Rev_rice_wheat$District <- as.factor(Irrig_Rev_rice_wheat$a_q103_district)
+
+## Now note that not all regions are observed,
+## therefore we need to remove those regions
+## from the penalty matrix
+rn <- rownames(K)
+lv <- levels(Irrig_Rev_rice_wheat$District)
+i <- rn %in% lv
+K <- K[i, i]
+
+set.seed(321)
+b_rice_yield_MRF <- bamlss(f_rice_yield_MRF, data = Irrig_Rev_rice_wheat, family = "gaussian")
+
+## First, note that we have the structured id = 'mrf1' and unstructured
+## spatial effect id = 're2', also indicated in the model summary
+summary(b_rice_yield_MRF)
+
+# Plot the nonlinear effect
+plot(b_rice_yield_MRF, model = "mu", term = "s(sowdate_fmt_rice_day)")
+plot(b_rice_yield_MRF, model = "mu", term = "s(g_q5305_irrig_times_rice)")
+plot(b_rice_yield_MRF, model = "mu", term = "s(nperha_rice)")
+plot(b_rice_yield_MRF, model = "mu", term = "s(p2o5perha_rice)")
+
+
+
+
+
+```
+
+# Visualization 
+```{r}
+library(distreg.vis)
+
+if (interactive()) {
+    vis()
+}
+
+```
+
+
+
+# Multivariate Spatial Geoadditive Bayesian Regression Model
+
+
+# Conclusion 
+
+
+
+
+
+# References 
