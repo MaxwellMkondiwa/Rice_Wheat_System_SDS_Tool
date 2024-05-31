@@ -10,7 +10,7 @@ fig-align: center
 fig-height: 5
 
 self-contained: true
-author: Maxwell Mkondiwa (m.mkondiwa@cgiar.org), Anton Urfels and Terry Hurley
+author: Maxwell Mkondiwa (m.mkondiwa@cgiar.org)
 
 editor: visual
 toc: true
@@ -92,7 +92,7 @@ plot(b_rice_yield_MRF, model = "mu", term = "s(p2o5perha_rice)")
 ```
 
 # Visualization 
-```{r}
+```{r results}
 library(distreg.vis)
 
 if (interactive()) {

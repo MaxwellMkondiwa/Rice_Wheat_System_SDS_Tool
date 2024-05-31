@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.550">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Quarto_tool</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="Quarto_tool_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Quarto_tool_files/libs/quarto-html/quarto.js"></script>
+<script src="Quarto_tool_files/libs/quarto-html/popper.min.js"></script>
+<script src="Quarto_tool_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Quarto_tool_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Quarto_tool_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Quarto_tool_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Quarto_tool_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Quarto_tool_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Quarto_tool_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Quarto_tool</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>We present a rice-wheat systen spatial decisionb support tool which relies on data from the matched landscape crop assessment surveys in eastern India and a multivariate geoadditive Bayesian model to predict entry points for system optimization in the area of interest.</p>
+</section>
+<section id="crop-specific-regressions" class="level1">
+<h1>Crop specific regressions</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sp)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(mgcv)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: nlme</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>This is mgcv 1.9-1. For overview type 'help("mgcv-package")'.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(bamlss)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: coda</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: colorspace</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: distributions3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'distributions3'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:stats':
+
+    Gamma</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:grDevices':
+
+    pdf</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>-</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>For citation info, use citation("bamlss") and see http://www.bamlss.org/.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'bamlss'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:mgcv':
+
+    smooth.construct</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Multivariate geoadditive model</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># remotes::install_git("https://git.uibk.ac.at/c4031039/mvnchol")</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co"># library(mvnchol)</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesX)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: shapefiles</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: foreign</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'shapefiles'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:foreign':
+
+    read.dbf, write.dbf</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(R2BayesX)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: BayesXsrc</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Registered S3 method overwritten by 'R2BayesX':
+  method   from  
+  plot.bnd bamlss</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'R2BayesX'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:BayesX':
+
+    add.neighbor, bnd2gra, bnd2sp, delete.neighbor, drawmap,
+    get.neighbor, gra2nb, nb2gra, plotnonp, plotsurf, read.bnd,
+    read.gra, shp2bnd, sp2bnd, write.bnd, write.gra</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:bamlss':
+
+    colorlegend, DIC, plot2d, plot3d, plotblock, plotmap, samples,
+    sliceplot, sx</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Linking to GEOS 3.11.2, GDAL 3.8.2, PROJ 9.3.1; sf_use_s2() is TRUE</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(spdep)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: spData</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>To access larger datasets in this package, install the spDataLarge
+package with: `install.packages('spDataLarge',
+repos='https://nowosad.github.io/drat/', type='source')`</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rio)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>Irrig_Rev_rice_wheat <span class="ot">&lt;-</span> <span class="fu">import</span>(<span class="st">"Irrig_Rev_rice_wheat.csv"</span>)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>shpname <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">getwd</span>(), <span class="st">"shp"</span>, <span class="st">"India_aoi_sf_sp"</span>)</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>India_aoi_sp_bnd <span class="ot">&lt;-</span> BayesX<span class="sc">::</span><span class="fu">shp2bnd</span>(<span class="at">shpname =</span> shpname, <span class="at">regionnames =</span> <span class="st">"District"</span>, <span class="at">check.is.in =</span> F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading map ... finished
+Note: map consists originally of 50 polygons
+Note: map consists of 47 regions</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>f_rice_yield_MRF <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    b_grain_yield_ton_per_ha_rice <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> rice_duration_class_long <span class="sc">+</span> <span class="fu">s</span>(sowdate_fmt_rice_day) <span class="sc">+</span> <span class="fu">s</span>(g_q5305_irrig_times_rice) <span class="sc">+</span> <span class="fu">s</span>(nperha_rice) <span class="sc">+</span> <span class="fu">s</span>(p2o5perha_rice) <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>        <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>),</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    sigma <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> rice_duration_class_long <span class="sc">+</span> <span class="fu">s</span>(sowdate_fmt_rice_day) <span class="sc">+</span> <span class="fu">s</span>(g_q5305_irrig_times_rice) <span class="sc">+</span> <span class="fu">s</span>(nperha_rice) <span class="sc">+</span> <span class="fu">s</span>(p2o5perha_rice) <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>        <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>)</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>K <span class="ot">&lt;-</span> <span class="fu">neighbormatrix</span>(India_aoi_sp_bnd)</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(K)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           Araria Arwal Aurangabad Banka Begusarai Bhagalpur Arah Buxar
+Araria          4     0          0     0         0         0    0     0
+Arwal           0     6         -1     0         0         0   -1     0
+Aurangabad      0    -1          3     0         0         0    0     0
+Banka           0     0          0     3         0        -1    0     0
+Begusarai       0     0          0     0         5         0    0     0
+Bhagalpur       0     0          0    -1         0         6    0     0
+           Darbhanga Gaya Gopalganj Jamui Jehanabad Kaimur Katihar Khagaria
+Araria             0    0         0     0         0      0       0        0
+Arwal              0   -1         0     0        -1      0       0        0
+Aurangabad         0   -1         0     0         0      0       0        0
+Banka              0    0         0    -1         0      0       0        0
+Begusarai          0    0         0     0         0      0       0       -1
+Bhagalpur          0    0         0     0         0      0      -1       -1
+           Kishanganj Lakhisarai Madhepura Madhubani Munger Muzaffarpur Nalanda
+Araria             -1          0        -1         0      0           0       0
+Arwal               0          0         0         0      0           0       0
+Aurangabad          0          0         0         0      0           0       0
+Banka               0          0         0         0     -1           0       0
+Begusarai           0         -1         0         0     -1           0       0
+Bhagalpur           0          0        -1         0     -1           0       0
+           Nawada WestChamparan Patna EastChamparan Purnia Rohtas Saharsa
+Araria          0             0     0             0     -1      0       0
+Arwal           0             0    -1             0      0     -1       0
+Aurangabad      0             0     0             0      0     -1       0
+Banka           0             0     0             0      0      0       0
+Begusarai       0             0    -1             0      0      0       0
+Bhagalpur       0             0     0             0     -1      0       0
+           Samastipur Saran Sheikhpura Sheohar Sitamarhi Siwan Supaul Vaishali
+Araria              0     0          0       0         0     0     -1        0
+Arwal               0     0          0       0         0     0      0        0
+Aurangabad          0     0          0       0         0     0      0        0
+Banka               0     0          0       0         0     0      0        0
+Begusarai          -1     0          0       0         0     0      0        0
+Bhagalpur           0     0          0       0         0     0      0        0
+           Balia Chandauli Deoria Gazipur Gorakhpur Kushinagar Maharajganj Mau
+Araria         0         0      0       0         0          0           0   0
+Arwal          0         0      0       0         0          0           0   0
+Aurangabad     0         0      0       0         0          0           0   0
+Banka          0         0      0       0         0          0           0   0
+Begusarai      0         0      0       0         0          0           0   0
+Bhagalpur      0         0      0       0         0          0           0   0
+           Siddharthnagar
+Araria                  0
+Arwal                   0
+Aurangabad              0
+Banka                   0
+Begusarai               0
+Bhagalpur               0</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Also need to transform to factor for</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="do">## setting up the MRF smooth.</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>Irrig_Rev_rice_wheat<span class="sc">$</span>District <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(Irrig_Rev_rice_wheat<span class="sc">$</span>a_q103_district)</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="do">## Now note that not all regions are observed,</span></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="do">## therefore we need to remove those regions</span></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a><span class="do">## from the penalty matrix</span></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>rn <span class="ot">&lt;-</span> <span class="fu">rownames</span>(K)</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>lv <span class="ot">&lt;-</span> <span class="fu">levels</span>(Irrig_Rev_rice_wheat<span class="sc">$</span>District)</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>i <span class="ot">&lt;-</span> rn <span class="sc">%in%</span> lv</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>K <span class="ot">&lt;-</span> K[i, i]</span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">321</span>)</span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>b_rice_yield_MRF <span class="ot">&lt;-</span> <span class="fu">bamlss</span>(f_rice_yield_MRF, <span class="at">data =</span> Irrig_Rev_rice_wheat, <span class="at">family =</span> <span class="st">"gaussian"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>AICc 12433.92 logPost -6219.26 logLik -6063.08 edf 148.79 eps 2.3399 iteration   1
+AICc 12239.92 logPost -5912.80 logLik -5967.69 edf 147.28 eps 0.4613 iteration   2
+AICc 12211.69 logPost -5886.53 logLik -5956.93 edf 144.14 eps 0.1461 iteration   3
+AICc 12205.11 logPost -5885.22 logLik -5953.35 edf 144.42 eps 3.3052 iteration   4
+AICc 12203.12 logPost -5884.97 logLik -5952.28 edf 144.48 eps 0.0430 iteration   5
+AICc 12202.50 logPost -5884.95 logLik -5951.95 edf 144.50 eps 0.0113 iteration   6
+AICc 12202.32 logPost -5884.97 logLik -5951.84 edf 144.52 eps 0.0088 iteration   7
+AICc 12202.28 logPost -5884.95 logLik -5951.82 edf 144.52 eps 0.0010 iteration   8
+AICc 12202.27 logPost -5884.95 logLik -5951.81 edf 144.53 eps 0.0002 iteration   9
+AICc 12202.27 logPost -5884.95 logLik -5951.81 edf 144.53 eps 0.0001 iteration  10
+AICc 12202.27 logPost -5884.95 logLik -5951.81 edf 144.53 eps 0.0001 iteration  11
+AICc 12202.26 logPost -5884.95 logLik -5951.80 edf 144.53 eps 0.0000 iteration  12
+AICc 12202.26 logPost -5884.95 logLik -5951.80 edf 144.53 eps 0.0000 iteration  12
+elapsed time:  9.61sec
+Starting the sampler...
+
+|                    |   0%  6.07min
+|*                   |   5%  4.23min 13.36sec
+|**                  |  10%  2.95min 19.68sec
+|***                 |  15%  2.27min 24.04sec
+|****                |  20%  1.94min 29.04sec
+|*****               |  25%  1.86min 37.26sec
+|******              |  30%  1.80min 46.37sec
+|*******             |  35%  1.65min 53.34sec
+|********            |  40%  1.48min 59.09sec
+|*********           |  45%  1.34min  1.09min
+|**********          |  50%  1.31min  1.31min
+|***********         |  55%  1.21min  1.48min
+|************        |  60%  1.05min  1.58min
+|*************       |  65% 53.58sec  1.66min
+|**************      |  70% 44.67sec  1.74min
+|***************     |  75% 36.43sec  1.82min
+|****************    |  80% 28.43sec  1.90min
+|*****************   |  85% 20.87sec  1.97min
+|******************  |  90% 13.65sec  2.05min
+|******************* |  95%  7.02sec  2.22min
+|********************| 100%  0.00sec  2.39min</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="do">## First, note that we have the structured id = 'mrf1' and unstructured</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="do">## spatial effect id = 're2', also indicated in the model summary</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(b_rice_yield_MRF)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+bamlss(formula = f_rice_yield_MRF, family = "gaussian", data = Irrig_Rev_rice_wheat)
+---
+Family: gaussian 
+Link function: mu = identity, sigma = log
+*---
+Formula mu:
+---
+b_grain_yield_ton_per_ha_rice ~ 1 + rice_duration_class_long + 
+    s(sowdate_fmt_rice_day) + s(g_q5305_irrig_times_rice) + s(nperha_rice) + 
+    s(p2o5perha_rice) + s(District, bs = "mrf", xt = list(penalty = K)) + 
+    s(District, bs = "re")
+-
+Parametric coefficients:
+                            Mean    2.5%     50%   97.5% parameters
+(Intercept)              1.91314 0.53852 1.65079 3.75969      0.013
+rice_duration_class_long 0.07470 0.01193 0.07425 0.13826      0.075
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+-
+Smooth terms:
+                                       Mean      2.5%       50%     97.5%
+s(sowdate_fmt_rice_day).tau21     5.552e-01 1.446e-02 3.045e-01 2.356e+00
+s(sowdate_fmt_rice_day).alpha     1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(sowdate_fmt_rice_day).edf       3.794e+00 1.621e+00 3.720e+00 5.888e+00
+s(g_q5305_irrig_times_rice).tau21 2.810e+00 3.602e-01 1.981e+00 1.025e+01
+s(g_q5305_irrig_times_rice).alpha 1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(g_q5305_irrig_times_rice).edf   6.431e+00 4.673e+00 6.475e+00 7.926e+00
+s(nperha_rice).tau21              3.890e-01 1.397e-04 6.752e-02 2.931e+00
+s(nperha_rice).alpha              1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(nperha_rice).edf                2.861e+00 1.009e+00 2.471e+00 6.332e+00
+s(p2o5perha_rice).tau21           9.008e-02 8.489e-05 6.828e-03 8.159e-01
+s(p2o5perha_rice).alpha           1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(p2o5perha_rice).edf             1.870e+00 1.007e+00 1.389e+00 4.649e+00
+s(District,id='mrf1').tau21       3.990e-02 7.448e-05 1.012e-02 1.928e-01
+s(District,id='mrf1').alpha       1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(District,id='mrf1').edf         2.234e+01 1.959e+00 2.819e+01 3.405e+01
+s(District,id='re2').tau21        5.635e+00 2.028e-01 5.290e+00 1.497e+01
+s(District,id='re2').alpha        1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(District,id='re2').edf          3.559e+01 3.390e+01 3.581e+01 3.594e+01
+                                  parameters
+s(sowdate_fmt_rice_day).tau21          0.182
+s(sowdate_fmt_rice_day).alpha             NA
+s(sowdate_fmt_rice_day).edf            3.291
+s(g_q5305_irrig_times_rice).tau21      3.723
+s(g_q5305_irrig_times_rice).alpha         NA
+s(g_q5305_irrig_times_rice).edf        7.106
+s(nperha_rice).tau21                   1.398
+s(nperha_rice).alpha                      NA
+s(nperha_rice).edf                     5.489
+s(p2o5perha_rice).tau21                0.018
+s(p2o5perha_rice).alpha                   NA
+s(p2o5perha_rice).edf                  1.787
+s(District,id='mrf1').tau21            0.029
+s(District,id='mrf1').alpha               NA
+s(District,id='mrf1').edf             31.761
+s(District,id='re2').tau21            12.212
+s(District,id='re2').alpha                NA
+s(District,id='re2').edf              35.917
+---
+Formula sigma:
+---
+sigma ~ 1 + rice_duration_class_long + s(sowdate_fmt_rice_day) + 
+    s(g_q5305_irrig_times_rice) + s(nperha_rice) + s(p2o5perha_rice) + 
+    s(District, bs = "mrf", xt = list(penalty = K)) + s(District, 
+    bs = "re")
+-
+Parametric coefficients:
+                              Mean      2.5%       50%     97.5% parameters
+(Intercept)              -0.122030 -0.179478 -0.122416 -0.066361     -0.114
+rice_duration_class_long  0.062283  0.009367  0.061563  0.116739      0.060
+-
+Acceptance probability:
+        Mean   2.5%    50% 97.5%
+alpha 0.9859 0.8901 1.0000     1
+-
+Smooth terms:
+                                       Mean      2.5%       50%     97.5%
+s(sowdate_fmt_rice_day).tau21     2.127e-02 9.513e-05 4.298e-03 1.617e-01
+s(sowdate_fmt_rice_day).alpha     9.774e-01 8.265e-01 9.996e-01 1.000e+00
+s(sowdate_fmt_rice_day).edf       1.604e+00 1.009e+00 1.337e+00 3.522e+00
+s(g_q5305_irrig_times_rice).tau21 2.974e-01 2.097e-04 1.473e-01 1.241e+00
+s(g_q5305_irrig_times_rice).alpha 9.369e-01 6.147e-01 9.946e-01 1.000e+00
+s(g_q5305_irrig_times_rice).edf   4.091e+00 1.081e+00 4.256e+00 6.466e+00
+s(nperha_rice).tau21              1.769e-01 4.136e-04 3.171e-02 1.268e+00
+s(nperha_rice).alpha              9.539e-01 6.534e-01 9.980e-01 1.000e+00
+s(nperha_rice).edf                2.652e+00 1.043e+00 2.327e+00 5.980e+00
+s(p2o5perha_rice).tau21           3.559e-01 1.656e-04 2.100e-02 2.839e+00
+s(p2o5perha_rice).alpha           9.487e-01 5.748e-01 9.987e-01 1.000e+00
+s(p2o5perha_rice).edf             2.693e+00 1.020e+00 2.093e+00 6.538e+00
+s(District,id='mrf1').tau21       3.139e-03 8.975e-05 2.615e-03 9.227e-03
+s(District,id='mrf1').alpha       7.852e-01 2.278e-01 8.831e-01 1.000e+00
+s(District,id='mrf1').edf         2.159e+01 3.408e+00 2.357e+01 2.997e+01
+s(District,id='re2').tau21        1.943e-02 1.640e-03 1.852e-02 4.396e-02
+s(District,id='re2').alpha        7.503e-01 1.686e-01 8.422e-01 1.000e+00
+s(District,id='re2').edf          2.694e+01 1.002e+01 2.848e+01 3.195e+01
+                                  parameters
+s(sowdate_fmt_rice_day).tau21          0.014
+s(sowdate_fmt_rice_day).alpha             NA
+s(sowdate_fmt_rice_day).edf            1.802
+s(g_q5305_irrig_times_rice).tau21      0.246
+s(g_q5305_irrig_times_rice).alpha         NA
+s(g_q5305_irrig_times_rice).edf        4.768
+s(nperha_rice).tau21                   0.091
+s(nperha_rice).alpha                      NA
+s(nperha_rice).edf                     3.139
+s(p2o5perha_rice).tau21                2.253
+s(p2o5perha_rice).alpha                   NA
+s(p2o5perha_rice).edf                  6.288
+s(District,id='mrf1').tau21            0.007
+s(District,id='mrf1').alpha               NA
+s(District,id='mrf1').edf             28.648
+s(District,id='re2').tau21             0.002
+s(District,id='re2').alpha                NA
+s(District,id='re2').edf              10.540
+---
+Sampler summary:
+-
+DIC = 12122.94 logLik = -6011.789 pd = 99.3659
+runtime = 146.36
+---
+Optimizer summary:
+-
+AICc = 12202.27 edf = 144.5353 logLik = -5951.809
+logPost = -5884.958 nobs = 4537 runtime = 9.61</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the nonlinear effect</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(b_rice_yield_MRF, <span class="at">model =</span> <span class="st">"mu"</span>, <span class="at">term =</span> <span class="st">"s(sowdate_fmt_rice_day)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(b_rice_yield_MRF, <span class="at">model =</span> <span class="st">"mu"</span>, <span class="at">term =</span> <span class="st">"s(g_q5305_irrig_times_rice)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-1-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(b_rice_yield_MRF, <span class="at">model =</span> <span class="st">"mu"</span>, <span class="at">term =</span> <span class="st">"s(nperha_rice)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-1-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(b_rice_yield_MRF, <span class="at">model =</span> <span class="st">"mu"</span>, <span class="at">term =</span> <span class="st">"s(p2o5perha_rice)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-1-4.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="visualization" class="level1">
+<h1>Visualization</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(distreg.vis)</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) {</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">vis</span>()</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
