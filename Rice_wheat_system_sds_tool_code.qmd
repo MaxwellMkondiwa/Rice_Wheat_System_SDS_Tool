@@ -1,7 +1,7 @@
 ---
 title: "Rice-Wheat System Spatial Decision Support Tool"
 format: 
-    dashboard: 
+    html: 
       code-fold: true
       code-tools: true
 fig-dpi: 300
@@ -401,6 +401,7 @@ summary(multivariate_geo_sow_MRF_corr_endo_General)
 
 ```{r}
 library(distreg.vis)
+
 
 if (interactive()) {
    distreg.vis:: vis()

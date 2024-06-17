@@ -1,6 +1,6 @@
 ---
 title: "Quarto_tool"
-format: html
+format: dashboard
 
 ---
 
