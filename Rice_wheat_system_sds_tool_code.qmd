@@ -382,7 +382,7 @@ f_rice_wheat_yield_MRF_corr_endo_General <- list(
     lambda13 ~ 1,
     lambda14 ~ 1,
     lambda23 ~ 1,
-    lambda24 ~ s(gw_2017)+s(District, bs = "mrf", xt = list("penalty" = K)) + s(District, bs = "re"),
+    lambda24 ~ s(Res_rice_sow)+s(Res_wheat_sow)+rice_duration_class_long + s(gw_2017) + s(onset_2017)+variety_type_NMWV+s(District, bs = "mrf", xt = list("penalty" = K)) + s(District, bs = "re"),
     lambda34 ~ 1
 )
 
@@ -390,16 +390,19 @@ multivariate_geo_sow_MRF_corr_endo_General <- bamlss(f_rice_wheat_yield_MRF_corr
 
 summary(multivariate_geo_sow_MRF_corr_endo_General)
 
+plot(multivariate_geo_sow_MRF_corr_endo_General, model = "lambda24", term = "s(gw_2017)")
 
+plot(multivariate_geo_sow_MRF_corr_endo_General, model = "lambda24", term = "s(onset_2017)")
 
+plot(multivariate_geo_sow_MRF_corr_endo_General, model = "lambda24", term = "s(Res_rice_sow)")
 
-
-
+plot(multivariate_geo_sow_MRF_corr_endo_General, model = "lambda24", term = "s(Res_wheat_sow)")
 ```
 
 # Visualization
 
 ```{r}
+#| context: server
 library(distreg.vis)
 
 
