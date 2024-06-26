@@ -1,0 +1,22 @@
+---
+title: "RW System Visualizer Tool"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(distreg.vis)
+
+load("RW_System_SDS.RData")
+
+# if (interactive()) {
+#    distreg.vis:: vis()
+# }
+
+distreg.vis::vis()
+
+```
+

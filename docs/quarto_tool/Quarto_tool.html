@@ -1,0 +1,2339 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.555">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Quarto_tool</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="Quarto_tool_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Quarto_tool_files/libs/quarto-html/quarto.js"></script>
+<script src="Quarto_tool_files/libs/quarto-html/popper.min.js"></script>
+<script src="Quarto_tool_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Quarto_tool_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Quarto_tool_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Quarto_tool_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Quarto_tool_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Quarto_tool_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Quarto_tool_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Quarto_tool</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>We present a rice-wheat systen spatial decisionb support tool which relies on data from the matched landscape crop assessment surveys in eastern India and a multivariate geoadditive Bayesian model to predict entry points for system optimization in the area of interest.</p>
+</section>
+<section id="crop-specific-regressions" class="level1">
+<h1>Crop specific regressions</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sp)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(mgcv)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: nlme</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>This is mgcv 1.9-1. For overview type 'help("mgcv-package")'.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(bamlss)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: coda</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: colorspace</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'bamlss'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:mgcv':
+
+    smooth.construct</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Multivariate geoadditive model</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># remotes::install_git("https://git.uibk.ac.at/c4031039/mvnchol")</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># library(mvnchol)</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(BayesX)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: shapefiles</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: foreign</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'shapefiles'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:foreign':
+
+    read.dbf, write.dbf</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(R2BayesX)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: BayesXsrc</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Registered S3 method overwritten by 'R2BayesX':
+  method   from  
+  plot.bnd bamlss</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'R2BayesX'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:BayesX':
+
+    add.neighbor, bnd2gra, bnd2sp, delete.neighbor, drawmap,
+    get.neighbor, gra2nb, nb2gra, plotnonp, plotsurf, read.bnd,
+    read.gra, shp2bnd, sp2bnd, write.bnd, write.gra</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:bamlss':
+
+    colorlegend, DIC, plot2d, plot3d, plotblock, plotmap, samples,
+    sliceplot, sx</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Linking to GEOS 3.9.1, GDAL 3.2.1, PROJ 7.2.1; sf_use_s2() is TRUE</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(spdep)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: spData</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>To access larger datasets in this package, install the spDataLarge
+package with: `install.packages('spDataLarge',
+repos='https://nowosad.github.io/drat/', type='source')`</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rio)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>Irrig_Rev_rice_wheat <span class="ot">&lt;-</span> <span class="fu">import</span>(<span class="st">"Irrig_Rev_rice_wheat.csv"</span>)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(janitor)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'janitor'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:stats':
+
+    chisq.test, fisher.test</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Irrig_Rev_rice_wheat &lt;- clean_names(Irrig_Rev_rice_wheat)</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="co">#Irrig_Rev_rice_wheat &lt;- Irrig_Rev_rice_wheat %&gt;% drop_na()</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="co"># library(lubridate)</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="co"># library(anytime)</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Irrig_Rev_rice_wheat$januaryfirst2017 &lt;- ymd("2017-01-01")</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Irrig_Rev_rice_wheat$sowdate_fmt_wheat_day &lt;- Irrig_Rev_rice_wheat$sowdate_fmt - Irrig_Rev_rice_wheat$januaryfirst2017</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Irrig_Rev_rice_wheat$sowdate_fmt_rice_day &lt;- Irrig_Rev_rice_wheat$sowdate_fmt_rice - Irrig_Rev_rice_wheat$januaryfirst2017</span></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>Irrig_Rev_rice_wheat<span class="sc">$</span>harvest_day_rice <span class="ot">&lt;-</span> Irrig_Rev_rice_wheat<span class="sc">$</span>l_crop_duration_days_rice <span class="sc">+</span> Irrig_Rev_rice_wheat<span class="sc">$</span>sowdate_fmt_rice_day</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Irrig_Rev_rice_wheat$harvest_day_wheat &lt;- Irrig_Rev_rice_wheat$l_crop_duration_days + Irrig_Rev_rice_wheat$sowdate_fmt_wheat_day</span></span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>shpname <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">getwd</span>(), <span class="st">"shp"</span>, <span class="st">"India_aoi_sf_sp"</span>)</span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>India_aoi_sp_bnd <span class="ot">&lt;-</span> BayesX<span class="sc">::</span><span class="fu">shp2bnd</span>(<span class="at">shpname =</span> shpname, <span class="at">regionnames =</span> <span class="st">"District"</span>, <span class="at">check.is.in =</span> F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading map ... finished
+Note: map consists originally of 50 polygons
+Note: map consists of 47 regions</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>f_rice_yield_MRF <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    b_grain_yield_ton_per_ha_rice <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> rice_duration_class_long <span class="sc">+</span> <span class="fu">s</span>(sowdate_fmt_rice_day) <span class="sc">+</span> <span class="fu">s</span>(g_q5305_irrig_times_rice) <span class="sc">+</span> <span class="fu">s</span>(nperha_rice) <span class="sc">+</span> <span class="fu">s</span>(p2o5perha_rice) <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>        <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>),</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    sigma <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> rice_duration_class_long <span class="sc">+</span> <span class="fu">s</span>(sowdate_fmt_rice_day) <span class="sc">+</span> <span class="fu">s</span>(g_q5305_irrig_times_rice) <span class="sc">+</span> <span class="fu">s</span>(nperha_rice) <span class="sc">+</span> <span class="fu">s</span>(p2o5perha_rice) <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>        <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>)</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>K <span class="ot">&lt;-</span> <span class="fu">neighbormatrix</span>(India_aoi_sp_bnd)</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(K)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           Araria Arwal Aurangabad Banka Begusarai Bhagalpur Arah Buxar
+Araria          4     0          0     0         0         0    0     0
+Arwal           0     6         -1     0         0         0   -1     0
+Aurangabad      0    -1          3     0         0         0    0     0
+Banka           0     0          0     3         0        -1    0     0
+Begusarai       0     0          0     0         5         0    0     0
+Bhagalpur       0     0          0    -1         0         6    0     0
+           Darbhanga Gaya Gopalganj Jamui Jehanabad Kaimur Katihar Khagaria
+Araria             0    0         0     0         0      0       0        0
+Arwal              0   -1         0     0        -1      0       0        0
+Aurangabad         0   -1         0     0         0      0       0        0
+Banka              0    0         0    -1         0      0       0        0
+Begusarai          0    0         0     0         0      0       0       -1
+Bhagalpur          0    0         0     0         0      0      -1       -1
+           Kishanganj Lakhisarai Madhepura Madhubani Munger Muzaffarpur Nalanda
+Araria             -1          0        -1         0      0           0       0
+Arwal               0          0         0         0      0           0       0
+Aurangabad          0          0         0         0      0           0       0
+Banka               0          0         0         0     -1           0       0
+Begusarai           0         -1         0         0     -1           0       0
+Bhagalpur           0          0        -1         0     -1           0       0
+           Nawada WestChamparan Patna EastChamparan Purnia Rohtas Saharsa
+Araria          0             0     0             0     -1      0       0
+Arwal           0             0    -1             0      0     -1       0
+Aurangabad      0             0     0             0      0     -1       0
+Banka           0             0     0             0      0      0       0
+Begusarai       0             0    -1             0      0      0       0
+Bhagalpur       0             0     0             0     -1      0       0
+           Samastipur Saran Sheikhpura Sheohar Sitamarhi Siwan Supaul Vaishali
+Araria              0     0          0       0         0     0     -1        0
+Arwal               0     0          0       0         0     0      0        0
+Aurangabad          0     0          0       0         0     0      0        0
+Banka               0     0          0       0         0     0      0        0
+Begusarai          -1     0          0       0         0     0      0        0
+Bhagalpur           0     0          0       0         0     0      0        0
+           Balia Chandauli Deoria Gazipur Gorakhpur Kushinagar Maharajganj Mau
+Araria         0         0      0       0         0          0           0   0
+Arwal          0         0      0       0         0          0           0   0
+Aurangabad     0         0      0       0         0          0           0   0
+Banka          0         0      0       0         0          0           0   0
+Begusarai      0         0      0       0         0          0           0   0
+Bhagalpur      0         0      0       0         0          0           0   0
+           Siddharthnagar
+Araria                  0
+Arwal                   0
+Aurangabad              0
+Banka                   0
+Begusarai               0
+Bhagalpur               0</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Also need to transform to factor for</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="do">## setting up the MRF smooth.</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>Irrig_Rev_rice_wheat<span class="sc">$</span>District <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(Irrig_Rev_rice_wheat<span class="sc">$</span>a_q103_district)</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="do">## Now note that not all regions are observed,</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="do">## therefore we need to remove those regions</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="do">## from the penalty matrix</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>rn <span class="ot">&lt;-</span> <span class="fu">rownames</span>(K)</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>lv <span class="ot">&lt;-</span> <span class="fu">levels</span>(Irrig_Rev_rice_wheat<span class="sc">$</span>District)</span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>i <span class="ot">&lt;-</span> rn <span class="sc">%in%</span> lv</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>K <span class="ot">&lt;-</span> K[i, i]</span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">321</span>)</span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(bamlss)</span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>b_rice_yield_MRF <span class="ot">&lt;-</span> <span class="fu">bamlss</span>(f_rice_yield_MRF, <span class="at">data =</span> Irrig_Rev_rice_wheat, <span class="at">family =</span> <span class="st">"gaussian"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>AICc 12433.92 logPost -6216.75 logLik -6063.08 edf 148.79 eps 2.3399 iteration   1
+AICc 12239.92 logPost -5910.29 logLik -5967.69 edf 147.28 eps 0.4613 iteration   2
+AICc 12211.69 logPost -5884.01 logLik -5956.93 edf 144.14 eps 0.1461 iteration   3
+AICc 12205.11 logPost -5882.70 logLik -5953.35 edf 144.42 eps 2.9473 iteration   4
+AICc 12203.12 logPost -5882.46 logLik -5952.28 edf 144.48 eps 0.0429 iteration   5
+AICc 12202.50 logPost -5882.43 logLik -5951.95 edf 144.50 eps 0.0113 iteration   6
+AICc 12202.32 logPost -5882.45 logLik -5951.84 edf 144.52 eps 0.0088 iteration   7
+AICc 12202.28 logPost -5882.44 logLik -5951.82 edf 144.52 eps 0.0010 iteration   8
+AICc 12202.27 logPost -5882.44 logLik -5951.81 edf 144.53 eps 0.0002 iteration   9
+AICc 12202.27 logPost -5882.44 logLik -5951.81 edf 144.53 eps 0.0001 iteration  10
+AICc 12202.27 logPost -5882.44 logLik -5951.81 edf 144.53 eps 0.0001 iteration  11
+AICc 12202.26 logPost -5882.44 logLik -5951.80 edf 144.53 eps 0.0000 iteration  12
+AICc 12202.26 logPost -5882.44 logLik -5951.80 edf 144.53 eps 0.0000 iteration  12
+elapsed time:  8.43sec
+Starting the sampler...
+
+|                    |   0%  1.55min
+|*                   |   5%  1.45min  4.58sec
+|**                  |  10%  1.40min  9.32sec
+|***                 |  15%  1.34min 14.21sec
+|****                |  20%  1.28min 19.27sec
+|*****               |  25%  1.24min 24.77sec
+|******              |  30%  1.18min 30.28sec
+|*******             |  35%  1.11min 35.83sec
+|********            |  40%  1.03min 41.21sec
+|*********           |  45% 56.99sec 46.63sec
+|**********          |  50% 51.96sec 51.96sec
+|***********         |  55% 46.83sec 57.24sec
+|************        |  60% 41.94sec  1.05min
+|*************       |  65% 36.76sec  1.14min
+|**************      |  70% 31.55sec  1.23min
+|***************     |  75% 26.37sec  1.32min
+|****************    |  80% 21.18sec  1.41min
+|*****************   |  85% 15.92sec  1.50min
+|******************  |  90% 10.62sec  1.59min
+|******************* |  95%  5.32sec  1.68min
+|********************| 100%  0.00sec  1.77min</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="do">## First, note that we have the structured id = 'mrf1' and unstructured</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="do">## spatial effect id = 're2', also indicated in the model summary</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(b_rice_yield_MRF)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+bamlss(formula = f_rice_yield_MRF, family = "gaussian", data = Irrig_Rev_rice_wheat)
+---
+Family: gaussian 
+Link function: mu = identity, sigma = log
+*---
+Formula mu:
+---
+b_grain_yield_ton_per_ha_rice ~ 1 + rice_duration_class_long + 
+    s(sowdate_fmt_rice_day) + s(g_q5305_irrig_times_rice) + s(nperha_rice) + 
+    s(p2o5perha_rice) + s(District, bs = "mrf", xt = list(penalty = K)) + 
+    s(District, bs = "re")
+-
+Parametric coefficients:
+                            Mean    2.5%     50%   97.5% parameters
+(Intercept)              1.90903 0.53256 1.64495 3.75492      0.013
+rice_duration_class_long 0.07427 0.01184 0.07438 0.13788      0.075
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+-
+Smooth terms:
+                                       Mean      2.5%       50%     97.5%
+s(sowdate_fmt_rice_day).tau21     5.510e-01 1.460e-02 2.985e-01 2.446e+00
+s(sowdate_fmt_rice_day).alpha     1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(sowdate_fmt_rice_day).edf       3.784e+00 1.625e+00 3.700e+00 5.909e+00
+s(g_q5305_irrig_times_rice).tau21 2.324e+00 2.653e-01 1.653e+00 8.760e+00
+s(g_q5305_irrig_times_rice).alpha 1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(g_q5305_irrig_times_rice).edf   6.482e+00 4.641e+00 6.530e+00 7.994e+00
+s(nperha_rice).tau21              4.816e-01 1.694e-04 7.272e-02 3.602e+00
+s(nperha_rice).alpha              1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(nperha_rice).edf                2.866e+00 1.010e+00 2.509e+00 6.675e+00
+s(p2o5perha_rice).tau21           9.498e-02 9.163e-05 7.279e-03 8.451e-01
+s(p2o5perha_rice).alpha           1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(p2o5perha_rice).edf             1.889e+00 1.007e+00 1.411e+00 4.674e+00
+s(District,id='mrf1').tau21       4.290e-02 7.425e-05 1.089e-02 2.036e-01
+s(District,id='mrf1').alpha       1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(District,id='mrf1').edf         2.274e+01 1.975e+00 2.845e+01 3.410e+01
+s(District,id='re2').tau21        5.664e+00 2.034e-01 5.310e+00 1.506e+01
+s(District,id='re2').alpha        1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(District,id='re2').edf          3.560e+01 3.391e+01 3.581e+01 3.594e+01
+                                  parameters
+s(sowdate_fmt_rice_day).tau21          0.182
+s(sowdate_fmt_rice_day).alpha             NA
+s(sowdate_fmt_rice_day).edf            3.291
+s(g_q5305_irrig_times_rice).tau21      2.895
+s(g_q5305_irrig_times_rice).alpha         NA
+s(g_q5305_irrig_times_rice).edf        7.106
+s(nperha_rice).tau21                   1.398
+s(nperha_rice).alpha                      NA
+s(nperha_rice).edf                     5.489
+s(p2o5perha_rice).tau21                0.018
+s(p2o5perha_rice).alpha                   NA
+s(p2o5perha_rice).edf                  1.787
+s(District,id='mrf1').tau21            0.029
+s(District,id='mrf1').alpha               NA
+s(District,id='mrf1').edf             31.761
+s(District,id='re2').tau21            12.212
+s(District,id='re2').alpha                NA
+s(District,id='re2').edf              35.917
+---
+Formula sigma:
+---
+sigma ~ 1 + rice_duration_class_long + s(sowdate_fmt_rice_day) + 
+    s(g_q5305_irrig_times_rice) + s(nperha_rice) + s(p2o5perha_rice) + 
+    s(District, bs = "mrf", xt = list(penalty = K)) + s(District, 
+    bs = "re")
+-
+Parametric coefficients:
+                              Mean      2.5%       50%     97.5% parameters
+(Intercept)              -0.119970 -0.179496 -0.119649 -0.063475     -0.114
+rice_duration_class_long  0.061685  0.009405  0.061474  0.115939      0.060
+-
+Acceptance probability:
+        Mean   2.5%    50% 97.5%
+alpha 0.9860 0.8949 1.0000     1
+-
+Smooth terms:
+                                       Mean      2.5%       50%     97.5%
+s(sowdate_fmt_rice_day).tau21     2.255e-02 9.588e-05 4.358e-03 1.617e-01
+s(sowdate_fmt_rice_day).alpha     9.779e-01 8.326e-01 1.000e+00 1.000e+00
+s(sowdate_fmt_rice_day).edf       1.623e+00 1.009e+00 1.340e+00 3.522e+00
+s(g_q5305_irrig_times_rice).tau21 2.200e-01 2.578e-04 1.086e-01 1.030e+00
+s(g_q5305_irrig_times_rice).alpha 9.450e-01 6.660e-01 9.945e-01 1.000e+00
+s(g_q5305_irrig_times_rice).edf   4.016e+00 1.123e+00 4.209e+00 6.532e+00
+s(nperha_rice).tau21              1.741e-01 4.189e-04 3.295e-02 1.329e+00
+s(nperha_rice).alpha              9.529e-01 6.319e-01 9.979e-01 1.000e+00
+s(nperha_rice).edf                2.684e+00 1.043e+00 2.352e+00 6.037e+00
+s(p2o5perha_rice).tau21           3.062e-01 1.414e-04 1.220e-02 2.836e+00
+s(p2o5perha_rice).alpha           9.579e-01 6.586e-01 9.982e-01 1.000e+00
+s(p2o5perha_rice).edf             2.461e+00 1.017e+00 1.808e+00 6.536e+00
+s(District,id='mrf1').tau21       2.374e-03 7.354e-05 1.646e-03 7.531e-03
+s(District,id='mrf1').alpha       8.160e-01 2.828e-01 9.140e-01 1.000e+00
+s(District,id='mrf1').edf         1.912e+01 2.882e+00 2.035e+01 2.921e+01
+s(District,id='re2').tau21        2.233e-02 5.515e-03 2.132e-02 4.458e-02
+s(District,id='re2').alpha        7.382e-01 1.551e-01 8.258e-01 1.000e+00
+s(District,id='re2').edf          2.842e+01 1.981e+01 2.919e+01 3.199e+01
+                                  parameters
+s(sowdate_fmt_rice_day).tau21          0.014
+s(sowdate_fmt_rice_day).alpha             NA
+s(sowdate_fmt_rice_day).edf            1.802
+s(g_q5305_irrig_times_rice).tau21      0.191
+s(g_q5305_irrig_times_rice).alpha         NA
+s(g_q5305_irrig_times_rice).edf        4.768
+s(nperha_rice).tau21                   0.091
+s(nperha_rice).alpha                      NA
+s(nperha_rice).edf                     3.139
+s(p2o5perha_rice).tau21                2.253
+s(p2o5perha_rice).alpha                   NA
+s(p2o5perha_rice).edf                  6.288
+s(District,id='mrf1').tau21            0.007
+s(District,id='mrf1').alpha               NA
+s(District,id='mrf1').edf             28.648
+s(District,id='re2').tau21             0.002
+s(District,id='re2').alpha                NA
+s(District,id='re2').edf              10.540
+---
+Sampler summary:
+-
+DIC = 12123.05 logLik = -6011.865 pd = 99.3237
+runtime = 107.38
+---
+Optimizer summary:
+-
+AICc = 12202.27 edf = 144.5353 logLik = -5951.809
+logPost = -5882.444 nobs = 4537 runtime = 8.43</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the nonlinear effect</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(b_rice_yield_MRF, <span class="at">model =</span> <span class="st">"mu"</span>, <span class="at">term =</span> <span class="st">"s(sowdate_fmt_rice_day)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(b_rice_yield_MRF, <span class="at">model =</span> <span class="st">"mu"</span>, <span class="at">term =</span> <span class="st">"s(g_q5305_irrig_times_rice)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-1-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(b_rice_yield_MRF, <span class="at">model =</span> <span class="st">"mu"</span>, <span class="at">term =</span> <span class="st">"s(nperha_rice)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-1-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(b_rice_yield_MRF, <span class="at">model =</span> <span class="st">"mu"</span>, <span class="at">term =</span> <span class="st">"s(p2o5perha_rice)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-1-4.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="wheat-model" class="level1">
+<h1>Wheat model</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>f_wheat_yield_MRF <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>    l_ton_per_hectare <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> variety_type_NMWV <span class="sc">+</span> <span class="fu">s</span>(sowdate_fmt_wheat_day) <span class="sc">+</span> g_q5305_irrig_times <span class="sc">+</span> nperha <span class="sc">+</span> p2o5perha <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>        <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>),</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>    sigma <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> variety_type_NMWV <span class="sc">+</span> <span class="fu">s</span>(sowdate_fmt_wheat_day) <span class="sc">+</span> g_q5305_irrig_times <span class="sc">+</span> nperha <span class="sc">+</span> p2o5perha <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>        <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>)</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">321</span>)</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>b_wheat_yield_MRF <span class="ot">&lt;-</span> <span class="fu">bamlss</span>(f_wheat_yield_MRF, <span class="at">data =</span> Irrig_Rev_rice_wheat, <span class="at">family =</span> <span class="st">"gaussian"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>AICc 8958.541 logPost -4419.70 logLik -4335.18 edf 139.61 eps 0.3246 iteration   1
+AICc 8445.144 logPost -4096.84 logLik -4071.93 edf 145.76 eps 0.1431 iteration   2
+AICc 8344.698 logPost -4042.08 logLik -4030.62 edf 137.40 eps 0.0345 iteration   3
+AICc 8319.455 logPost -4032.32 logLik -4022.32 edf 133.33 eps 0.0132 iteration   4
+AICc 8313.001 logPost -4030.95 logLik -4020.60 edf 131.91 eps 0.0050 iteration   5
+AICc 8312.046 logPost -4029.90 logLik -4020.23 edf 131.81 eps 0.0019 iteration   6
+AICc 8311.784 logPost -4029.54 logLik -4020.15 edf 131.76 eps 0.0010 iteration   7
+AICc 8311.335 logPost -4029.64 logLik -4020.12 edf 131.57 eps 0.0005 iteration   8
+AICc 8311.297 logPost -4029.53 logLik -4020.11 edf 131.57 eps 0.0003 iteration   9
+AICc 8311.268 logPost -4029.43 logLik -4020.10 edf 131.56 eps 0.0002 iteration  10
+AICc 8311.245 logPost -4029.35 logLik -4020.09 edf 131.56 eps 0.0002 iteration  11
+AICc 8311.226 logPost -4029.28 logLik -4020.09 edf 131.56 eps 0.0002 iteration  12
+AICc 8311.211 logPost -4029.22 logLik -4020.08 edf 131.56 eps 0.0001 iteration  13
+AICc 8311.197 logPost -4029.16 logLik -4020.08 edf 131.55 eps 0.0001 iteration  14
+AICc 8311.185 logPost -4029.11 logLik -4020.07 edf 131.55 eps 0.0001 iteration  15
+AICc 8311.175 logPost -4029.06 logLik -4020.07 edf 131.55 eps 0.0001 iteration  16
+AICc 8311.175 logPost -4029.06 logLik -4020.07 edf 131.55 eps 0.0001 iteration  16
+elapsed time:  5.82sec
+Starting the sampler...
+
+|                    |   0%  1.23min
+|*                   |   5%  1.15min  3.62sec
+|**                  |  10%  1.07min  7.15sec
+|***                 |  15%  1.02min 10.76sec
+|****                |  20% 58.40sec 14.60sec
+|*****               |  25% 55.53sec 18.51sec
+|******              |  30% 52.90sec 22.67sec
+|*******             |  35% 49.33sec 26.56sec
+|********            |  40% 46.26sec 30.84sec
+|*********           |  45% 42.56sec 34.82sec
+|**********          |  50% 38.71sec 38.71sec
+|***********         |  55% 34.77sec 42.50sec
+|************        |  60% 30.88sec 46.32sec
+|*************       |  65% 27.09sec 50.31sec
+|**************      |  70% 23.25sec 54.25sec
+|***************     |  75% 19.36sec 58.07sec
+|****************    |  80% 15.49sec  1.03min
+|*****************   |  85% 11.63sec  1.10min
+|******************  |  90%  7.76sec  1.16min
+|******************* |  95%  3.88sec  1.23min
+|********************| 100%  0.00sec  1.29min</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="do">## First, note that we have the structured id = 'mrf1' and unstructured</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="do">## spatial effect id = 're2', also indicated in the model summary</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(b_wheat_yield_MRF)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+bamlss(formula = f_wheat_yield_MRF, family = "gaussian", data = Irrig_Rev_rice_wheat)
+---
+Family: gaussian 
+Link function: mu = identity, sigma = log
+*---
+Formula mu:
+---
+l_ton_per_hectare ~ 1 + variety_type_NMWV + s(sowdate_fmt_wheat_day) + 
+    g_q5305_irrig_times + nperha + p2o5perha + s(District, bs = "mrf", 
+    xt = list(penalty = K)) + s(District, bs = "re")
+-
+Parametric coefficients:
+                          Mean       2.5%        50%      97.5% parameters
+(Intercept)         -0.5740916 -1.1340813 -0.6630343  0.1609182     -1.359
+variety_type_NMWV    0.3056829  0.2611116  0.3052558  0.3529448      0.303
+g_q5305_irrig_times  0.4153445  0.3895350  0.4153230  0.4439696      0.411
+nperha               0.0012336  0.0006668  0.0012288  0.0017957      0.001
+p2o5perha            0.0031334  0.0020527  0.0031371  0.0042060      0.003
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+-
+Smooth terms:
+                                    Mean      2.5%       50%     97.5%
+s(sowdate_fmt_wheat_day).tau21 4.037e-02 7.694e-05 3.583e-03 3.627e-01
+s(sowdate_fmt_wheat_day).alpha 1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(sowdate_fmt_wheat_day).edf   1.940e+00 1.015e+00 1.491e+00 4.943e+00
+s(District,id='mrf1').tau21    3.294e-03 6.895e-05 9.061e-04 1.507e-02
+s(District,id='mrf1').alpha    1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(District,id='mrf1').edf      1.865e+01 3.933e+00 1.853e+01 3.206e+01
+s(District,id='re2').tau21     4.793e+00 1.759e+00 4.533e+00 9.645e+00
+s(District,id='re2').alpha     1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(District,id='re2').edf       3.589e+01 3.577e+01 3.590e+01 3.596e+01
+                               parameters
+s(sowdate_fmt_wheat_day).tau21     15.401
+s(sowdate_fmt_wheat_day).alpha         NA
+s(sowdate_fmt_wheat_day).edf        8.309
+s(District,id='mrf1').tau21         0.003
+s(District,id='mrf1').alpha            NA
+s(District,id='mrf1').edf          26.415
+s(District,id='re2').tau21          6.085
+s(District,id='re2').alpha             NA
+s(District,id='re2').edf           35.897
+---
+Formula sigma:
+---
+sigma ~ 1 + variety_type_NMWV + s(sowdate_fmt_wheat_day) + g_q5305_irrig_times + 
+    nperha + p2o5perha + s(District, bs = "mrf", xt = list(penalty = K)) + 
+    s(District, bs = "re")
+-
+Parametric coefficients:
+                          Mean       2.5%        50%      97.5% parameters
+(Intercept)         -0.7819694 -0.8953612 -0.7812289 -0.6696800     -0.316
+variety_type_NMWV    0.2056530  0.1502403  0.2059671  0.2547450      0.198
+g_q5305_irrig_times  0.0927109  0.0623800  0.0929975  0.1245421      0.098
+nperha              -0.0011626 -0.0018926 -0.0011700 -0.0004521     -0.001
+p2o5perha            0.0017864  0.0003726  0.0017712  0.0031635      0.002
+-
+Acceptance probability:
+        Mean   2.5%    50% 97.5%
+alpha 0.8957 0.4855 0.9745     1
+-
+Smooth terms:
+                                    Mean      2.5%       50%     97.5%
+s(sowdate_fmt_wheat_day).tau21 8.472e-02 5.798e-04 4.162e-02 4.208e-01
+s(sowdate_fmt_wheat_day).alpha 9.647e-01 7.699e-01 9.984e-01 1.000e+00
+s(sowdate_fmt_wheat_day).edf   2.574e+00 1.067e+00 2.524e+00 4.535e+00
+s(District,id='mrf1').tau21    6.406e-04 5.097e-05 3.717e-04 2.418e-03
+s(District,id='mrf1').alpha    8.975e-01 4.521e-01 9.764e-01 1.000e+00
+s(District,id='mrf1').edf      1.089e+01 2.084e+00 9.704e+00 2.304e+01
+s(District,id='re2').tau21     1.986e-02 9.452e-03 1.872e-02 3.562e-02
+s(District,id='re2').alpha     7.360e-01 1.839e-01 8.280e-01 1.000e+00
+s(District,id='re2').edf       2.834e+01 2.429e+01 2.855e+01 3.129e+01
+                               parameters
+s(sowdate_fmt_wheat_day).tau21      0.035
+s(sowdate_fmt_wheat_day).alpha         NA
+s(sowdate_fmt_wheat_day).edf        2.415
+s(District,id='mrf1').tau21         0.001
+s(District,id='mrf1').alpha            NA
+s(District,id='mrf1').edf          13.967
+s(District,id='re2').tau21          0.203
+s(District,id='re2').alpha             NA
+s(District,id='re2').edf           34.551
+---
+Sampler summary:
+-
+DIC = 8219.792 logLik = -4070.916 pd = 77.9595
+runtime = 78.18
+---
+Optimizer summary:
+-
+AICc = 8311.175 edf = 131.5535 logLik = -4020.075
+logPost = -4029.064 nobs = 4537 runtime = 5.82</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the nonlinear effect</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(b_wheat_yield_MRF, <span class="at">model =</span> <span class="st">"mu"</span>, <span class="at">term =</span> <span class="st">"s(sowdate_fmt_wheat_day)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Now, to predict the spatial effects we set up new data.</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>nd <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="st">"District"</span> <span class="ot">=</span> <span class="fu">unique</span>(Irrig_Rev_rice_wheat<span class="sc">$</span>District))</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a><span class="do">## Predict for the structured spatial effects.</span></span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>p_str_wheat_yield_MRF <span class="ot">&lt;-</span> <span class="fu">predict</span>(b_wheat_yield_MRF, <span class="at">newdata =</span> nd, <span class="at">term =</span> <span class="st">"s(District,id='mrf1')"</span>, <span class="at">intercept =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a><span class="do">## And the unstructured spatial effect.</span></span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>p_unstr_wheat_yield_MRF <span class="ot">&lt;-</span> <span class="fu">predict</span>(b_wheat_yield_MRF, <span class="at">newdata =</span> nd, <span class="at">term =</span> <span class="st">"s(District,id='re2')"</span>, <span class="at">intercept =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a><span class="do">## MRF smooth effect.</span></span>
+<span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a><span class="fu">plotmap</span>(India_aoi_sp_bnd,</span>
+<span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> p_str_wheat_yield_MRF<span class="sc">$</span>mu, <span class="at">id =</span> nd<span class="sc">$</span>District,</span>
+<span id="cb45-13"><a href="#cb45-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">main =</span> <span class="fu">expression</span>(mu), <span class="at">title =</span> <span class="st">"Structured spatial effect"</span></span>
+<span id="cb45-14"><a href="#cb45-14" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-2-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotmap</span>(India_aoi_sp_bnd,</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> p_str_wheat_yield_MRF<span class="sc">$</span>sigma, <span class="at">id =</span> nd<span class="sc">$</span>District,</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">main =</span> <span class="fu">expression</span>(sigma), <span class="at">title =</span> <span class="st">"Structured spatial effect"</span></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-2-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Random effects.</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plotmap</span>(India_aoi_sp_bnd,</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> p_unstr_wheat_yield_MRF<span class="sc">$</span>mu, <span class="at">id =</span> nd<span class="sc">$</span>District, <span class="at">title =</span> <span class="st">"Unstructured spatial effect"</span></span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-2-4.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotmap</span>(India_aoi_sp_bnd,</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> p_unstr_wheat_yield_MRF<span class="sc">$</span>sigma, <span class="at">id =</span> nd<span class="sc">$</span>District, <span class="at">title =</span> <span class="st">"Unstructured spatial effect"</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-2-5.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="multivariate-spatial-geoadditive-bayesian-regression-model" class="level1">
+<h1>Multivariate Spatial Geoadditive Bayesian Regression Model</h1>
+</section>
+<section id="spatial-for-multivariate-model" class="level1">
+<h1>Spatial + for multivariate model</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sp)</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(mgcv)</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(bamlss)</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Multivariate geoadditive model</span></span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a><span class="co"># remotes::install_git("https://git.uibk.ac.at/c4031039/mvnchol")</span></span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a><span class="co"># install_github("https://github.com/meteosimon/mvnchol")</span></span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(mvnchol)</span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove NAs in the monsoon variables</span></span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>Irrig_Rev_rice_wheat <span class="ot">&lt;-</span> <span class="fu">subset</span>(Irrig_Rev_rice_wheat, <span class="sc">!</span>(<span class="fu">is.na</span>(Irrig_Rev_rice_wheat<span class="sc">$</span>onset_2017)))</span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>Irrig_Rev_rice_wheat <span class="ot">&lt;-</span> <span class="fu">subset</span>(Irrig_Rev_rice_wheat, <span class="sc">!</span>(<span class="fu">is.na</span>(Irrig_Rev_rice_wheat<span class="sc">$</span>monsoon_onset_dev)))</span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>Irrig_Rev_rice_wheat <span class="ot">&lt;-</span> <span class="fu">subset</span>(Irrig_Rev_rice_wheat, <span class="sc">!</span>(<span class="fu">is.na</span>(Irrig_Rev_rice_wheat<span class="sc">$</span>median_onset_82_15)))</span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>Irrig_Rev_rice_wheat <span class="ot">&lt;-</span> <span class="fu">subset</span>(Irrig_Rev_rice_wheat, <span class="sc">!</span>(<span class="fu">is.na</span>(Irrig_Rev_rice_wheat<span class="sc">$</span>sd_onset_82_15)))</span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Rice first stage</span></span>
+<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a>f_sow_rice_1st_stage <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a>    sowdate_fmt_rice_day <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> rice_duration_class_long <span class="sc">+</span> <span class="fu">s</span>(gw_2017) <span class="sc">+</span> <span class="fu">s</span>(onset_2017) <span class="sc">+</span> <span class="fu">s</span>(monsoon_onset_dev) <span class="sc">+</span> <span class="fu">s</span>(median_onset_82_15) <span class="sc">+</span> <span class="fu">s</span>(sd_onset_82_15) <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span></span>
+<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a>        <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>)</span>
+<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a>f_sow_rice_1st_stage_MRF <span class="ot">&lt;-</span> <span class="fu">bamlss</span>(f_sow_rice_1st_stage, <span class="at">data =</span> Irrig_Rev_rice_wheat, <span class="at">family =</span> <span class="st">"gaussian"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>AICc 38862.03 logPost -165306. logLik -19371.2 edf 59.010 eps 0.1226 iteration   1
+AICc 34841.08 logPost -31072.7 logLik -17339.3 edf 79.788 eps 0.0980 iteration   2
+AICc 33498.94 logPost -18399.0 logLik -16648.2 edf 98.970 eps 0.0632 iteration   3
+AICc 33180.98 logPost -17093.4 logLik -16491.0 edf 97.287 eps 0.0297 iteration   4
+AICc 33096.83 logPost -16986.5 logLik -16452.6 edf 93.751 eps 0.0069 iteration   5
+AICc 33056.53 logPost -16935.2 logLik -16435.7 edf 90.674 eps 0.0017 iteration   6
+AICc 33040.37 logPost -16899.0 logLik -16429.8 edf 88.587 eps 0.0009 iteration   7
+AICc 33035.63 logPost -16869.0 logLik -16428.1 edf 87.868 eps 0.0003 iteration   8
+AICc 33028.91 logPost -16845.9 logLik -16427.6 edf 85.110 eps 0.0001 iteration   9
+AICc 33028.60 logPost -16840.2 logLik -16427.5 edf 85.077 eps 0.0000 iteration  10
+AICc 33028.60 logPost -16840.2 logLik -16427.5 edf 85.077 eps 0.0000 iteration  10
+elapsed time:  3.34sec
+Starting the sampler...
+
+|                    |   0% 48.79sec
+|*                   |   5% 46.74sec  2.46sec
+|**                  |  10% 45.90sec  5.10sec
+|***                 |  15% 42.73sec  7.54sec
+|****                |  20% 40.44sec 10.11sec
+|*****               |  25% 38.46sec 12.82sec
+|******              |  30% 36.07sec 15.46sec
+|*******             |  35% 33.97sec 18.29sec
+|********            |  40% 31.53sec 21.02sec
+|*********           |  45% 29.16sec 23.86sec
+|**********          |  50% 26.49sec 26.49sec
+|***********         |  55% 23.96sec 29.29sec
+|************        |  60% 21.38sec 32.07sec
+|*************       |  65% 18.77sec 34.85sec
+|**************      |  70% 16.09sec 37.54sec
+|***************     |  75% 13.39sec 40.18sec
+|****************    |  80% 10.70sec 42.82sec
+|*****************   |  85%  8.04sec 45.54sec
+|******************  |  90%  5.37sec 48.29sec
+|******************* |  95%  2.68sec 50.97sec
+|********************| 100%  0.00sec 53.69sec</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>fitted_f_sow_rice_1st_stage_MRF <span class="ot">&lt;-</span> f_sow_rice_1st_stage_MRF<span class="sc">$</span>fitted</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>Irrig_Rev_rice_wheat<span class="sc">$</span>Res_rice_sow <span class="ot">&lt;-</span> Irrig_Rev_rice_wheat<span class="sc">$</span>sowdate_fmt_rice_day <span class="sc">-</span> fitted_f_sow_rice_1st_stage_MRF<span class="sc">$</span>mu</span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Wheat first stage</span></span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>f_sow_wheat_1st_stage <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a>    sowdate_fmt_wheat_day <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> variety_type_NMWV <span class="sc">+</span> <span class="fu">s</span>(harvest_day_rice) <span class="sc">+</span> <span class="fu">s</span>(gw_2018) <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span></span>
+<span id="cb51-8"><a href="#cb51-8" aria-hidden="true" tabindex="-1"></a>        <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>)</span>
+<span id="cb51-9"><a href="#cb51-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb51-10"><a href="#cb51-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-11"><a href="#cb51-11" aria-hidden="true" tabindex="-1"></a>f_sow_wheat_1st_stage_MRF <span class="ot">&lt;-</span> <span class="fu">bamlss</span>(f_sow_wheat_1st_stage, <span class="at">data =</span> Irrig_Rev_rice_wheat, <span class="at">family =</span> <span class="st">"gaussian"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>AICc 49188.65 logPost -488850. logLik -24543.4 edf 50.285 eps 0.2566 iteration   1
+AICc 44824.42 logPost -64385.9 logLik -22386.0 edf 26.046 eps 0.0753 iteration   2
+AICc 40409.05 logPost -24539.6 logLik -20136.0 edf 67.444 eps 0.0824 iteration   3
+AICc 36648.46 logPost -18973.1 logLik -18246.6 edf 76.219 eps 0.0789 iteration   4
+AICc 33900.77 logPost -17313.2 logLik -16871.9 edf 77.104 eps 0.0796 iteration   5
+AICc 32636.01 logPost -16736.4 logLik -16238.1 edf 78.490 eps 0.0660 iteration   6
+AICc 32419.72 logPost -16629.9 logLik -16129.2 edf 79.163 eps 0.0324 iteration   7
+AICc 32413.31 logPost -16627.4 logLik -16125.7 edf 79.502 eps 0.0056 iteration   8
+AICc 32412.92 logPost -16627.3 logLik -16125.4 edf 79.574 eps 0.0001 iteration   9
+AICc 32412.79 logPost -16627.2 logLik -16125.3 edf 79.581 eps 0.0000 iteration  10
+AICc 32412.79 logPost -16627.2 logLik -16125.3 edf 79.581 eps 0.0000 iteration  10
+elapsed time:  2.30sec
+Starting the sampler...
+
+|                    |   0% 36.89sec
+|*                   |   5% 36.48sec  1.92sec
+|**                  |  10% 35.28sec  3.92sec
+|***                 |  15% 33.55sec  5.92sec
+|****                |  20% 31.96sec  7.99sec
+|*****               |  25% 30.57sec 10.19sec
+|******              |  30% 28.72sec 12.31sec
+|*******             |  35% 27.02sec 14.55sec
+|********            |  40% 24.91sec 16.61sec
+|*********           |  45% 22.95sec 18.78sec
+|**********          |  50% 20.89sec 20.89sec
+|***********         |  55% 18.83sec 23.02sec
+|************        |  60% 16.83sec 25.25sec
+|*************       |  65% 14.71sec 27.31sec
+|**************      |  70% 12.68sec 29.58sec
+|***************     |  75% 10.56sec 31.67sec
+|****************    |  80%  8.46sec 33.83sec
+|*****************   |  85%  6.35sec 36.00sec
+|******************  |  90%  4.23sec 38.10sec
+|******************* |  95%  2.12sec 40.27sec
+|********************| 100%  0.00sec 42.39sec</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>fitted_f_sow_wheat_1st_stage_MRF <span class="ot">&lt;-</span> f_sow_wheat_1st_stage_MRF<span class="sc">$</span>fitted</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>Irrig_Rev_rice_wheat<span class="sc">$</span>Res_wheat_sow <span class="ot">&lt;-</span> Irrig_Rev_rice_wheat<span class="sc">$</span>sowdate_fmt_wheat_day <span class="sc">-</span> fitted_f_sow_wheat_1st_stage_MRF<span class="sc">$</span>mu</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Multivariate with sowing dates as endogenous</span></span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>f_rice_wheat_yield_MRF_corr_endo <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a>    sowdate_fmt_rice_day <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> rice_duration_class_long <span class="sc">+</span> <span class="fu">s</span>(gw_2017) <span class="sc">+</span> <span class="fu">s</span>(onset_2017) <span class="sc">+</span> <span class="fu">s</span>(monsoon_onset_dev) <span class="sc">+</span> <span class="fu">s</span>(median_onset_82_15) <span class="sc">+</span> <span class="fu">s</span>(sd_onset_82_15) <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span></span>
+<span id="cb53-9"><a href="#cb53-9" aria-hidden="true" tabindex="-1"></a>        <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>),</span>
+<span id="cb53-10"><a href="#cb53-10" aria-hidden="true" tabindex="-1"></a>    b_grain_yield_ton_per_ha_rice <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> rice_duration_class_long <span class="sc">+</span> <span class="fu">s</span>(Res_rice_sow) <span class="sc">+</span> <span class="fu">s</span>(g_q5305_irrig_times_rice) <span class="sc">+</span> <span class="fu">s</span>(nperha_rice) <span class="sc">+</span> <span class="fu">s</span>(p2o5perha_rice) <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span></span>
+<span id="cb53-11"><a href="#cb53-11" aria-hidden="true" tabindex="-1"></a>        <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>),</span>
+<span id="cb53-12"><a href="#cb53-12" aria-hidden="true" tabindex="-1"></a>    sowdate_fmt_wheat_day <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> variety_type_NMWV <span class="sc">+</span> <span class="fu">s</span>(harvest_day_rice) <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span></span>
+<span id="cb53-13"><a href="#cb53-13" aria-hidden="true" tabindex="-1"></a>        <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>),</span>
+<span id="cb53-14"><a href="#cb53-14" aria-hidden="true" tabindex="-1"></a>    l_ton_per_hectare <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> variety_type_NMWV <span class="sc">+</span> <span class="fu">s</span>(Res_wheat_sow) <span class="sc">+</span> g_q5305_irrig_times <span class="sc">+</span> nperha <span class="sc">+</span> p2o5perha <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>),</span>
+<span id="cb53-15"><a href="#cb53-15" aria-hidden="true" tabindex="-1"></a>    lamdiag1 <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb53-16"><a href="#cb53-16" aria-hidden="true" tabindex="-1"></a>    lamdiag2 <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb53-17"><a href="#cb53-17" aria-hidden="true" tabindex="-1"></a>    lamdiag3 <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb53-18"><a href="#cb53-18" aria-hidden="true" tabindex="-1"></a>    lamdiag4 <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb53-19"><a href="#cb53-19" aria-hidden="true" tabindex="-1"></a>    lambda12 <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb53-20"><a href="#cb53-20" aria-hidden="true" tabindex="-1"></a>    lambda13 <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb53-21"><a href="#cb53-21" aria-hidden="true" tabindex="-1"></a>    lambda14 <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb53-22"><a href="#cb53-22" aria-hidden="true" tabindex="-1"></a>    lambda23 <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb53-23"><a href="#cb53-23" aria-hidden="true" tabindex="-1"></a>    lambda24 <span class="sc">~</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>),</span>
+<span id="cb53-24"><a href="#cb53-24" aria-hidden="true" tabindex="-1"></a>    lambda34 <span class="sc">~</span> <span class="dv">1</span></span>
+<span id="cb53-25"><a href="#cb53-25" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb53-26"><a href="#cb53-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-27"><a href="#cb53-27" aria-hidden="true" tabindex="-1"></a>multivariate_geo_sow_MRF_corr_endo <span class="ot">&lt;-</span> <span class="fu">bamlss</span>(f_rice_wheat_yield_MRF_corr_endo, <span class="at">type =</span> <span class="st">"modified"</span>, <span class="at">family =</span> <span class="fu">mvnchol_bamlss</span>(<span class="at">k =</span> <span class="dv">4</span>), <span class="at">data =</span> Irrig_Rev_rice_wheat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>AICc 349476.1 logPost -2543606 logLik -174262. edf 430.14 eps 1.0000 iteration   1
+AICc 157743.5 logPost -2447306 logLik -78382.3 edf 441.55 eps 0.1825 iteration   2
+AICc 104307.5 logPost -2420173 logLik -51667.3 edf 439.10 eps 0.2070 iteration   3
+AICc 89316.74 logPost -2412636 logLik -44189.9 edf 424.43 eps 0.1254 iteration   4
+AICc 86452.65 logPost -2411216 logLik -42768.9 edf 415.34 eps 0.0628 iteration   5
+AICc 86231.98 logPost -2411101 logLik -42661.9 edf 412.53 eps 0.0202 iteration   6
+AICc 86215.73 logPost -2411097 logLik -42659.1 edf 408.13 eps 0.0027 iteration   7
+AICc 86213.14 logPost -2411094 logLik -42658.2 edf 407.83 eps 0.0007 iteration   8
+AICc 86211.64 logPost -2411092 logLik -42657.7 edf 407.62 eps 0.0003 iteration   9
+AICc 86210.65 logPost -2411090 logLik -42657.4 edf 407.43 eps 0.0002 iteration  10
+AICc 86205.44 logPost -2411208 logLik -42657.3 edf 405.37 eps 0.0001 iteration  11
+AICc 86205.08 logPost -2411207 logLik -42657.3 edf 405.26 eps 0.0001 iteration  12
+AICc 86202.45 logPost -2412410 logLik -42657.2 edf 404.20 eps 0.0001 iteration  13
+AICc 86202.37 logPost -2412333 logLik -42657.2 edf 404.18 eps 0.0001 iteration  14
+AICc 86202.37 logPost -2412333 logLik -42657.2 edf 404.18 eps 0.0001 iteration  14
+elapsed time: 48.67sec
+Starting the sampler...
+
+|                    |   0%  7.83min
+|*                   |   5%  7.51min 23.73sec
+|**                  |  10%  7.12min 47.48sec
+|***                 |  15%  6.41min  1.13min
+|****                |  20%  5.95min  1.49min
+|*****               |  25%  5.61min  1.87min
+|******              |  30%  5.26min  2.26min
+|*******             |  35%  4.93min  2.66min
+|********            |  40%  4.58min  3.05min
+|*********           |  45%  4.20min  3.44min
+|**********          |  50%  3.83min  3.83min
+|***********         |  55%  3.45min  4.22min
+|************        |  60%  3.07min  4.61min
+|*************       |  65%  2.69min  5.00min
+|**************      |  70%  2.31min  5.40min
+|***************     |  75%  1.93min  5.79min
+|****************    |  80%  1.55min  6.18min
+|*****************   |  85%  1.16min  6.57min
+|******************  |  90% 46.42sec  6.96min
+|******************* |  95% 23.22sec  7.35min
+|********************| 100%  0.00sec  7.75min</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(multivariate_geo_sow_MRF_corr_endo)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+bamlss(formula = f_rice_wheat_yield_MRF_corr_endo, family = mvnchol_bamlss(k = 4), 
+    data = Irrig_Rev_rice_wheat, type = "modified")
+---
+Family: mvnchol 
+Link function: mu1 = identity, mu2 = identity, mu3 = identity, mu4 = identity, lamdiag1 = log, lamdiag2 = log, lamdiag3 = log, lamdiag4 = log, lambda12 = identity, lambda13 = identity, lambda14 = identity, lambda23 = identity, lambda24 = identity, lambda34 = identity
+*---
+Formula mu1:
+---
+sowdate_fmt_rice_day ~ 1 + rice_duration_class_long + s(gw_2017) + 
+    s(onset_2017) + s(monsoon_onset_dev) + s(median_onset_82_15) + 
+    s(sd_onset_82_15) + s(District, bs = "mrf", xt = list(penalty = K)) + 
+    s(District, bs = "re")
+-
+Parametric coefficients:
+                            Mean    2.5%     50%   97.5% parameters
+(Intercept)              68.6313 65.0608 69.0601 70.4619      2.030
+rice_duration_class_long -1.3633 -2.0104 -1.3634 -0.7134     -1.341
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+-
+Smooth terms:
+                                 Mean      2.5%       50%     97.5% parameters
+s(gw_2017).tau21            2.095e+00 1.260e-04 1.210e-02 2.125e+01    428.875
+s(gw_2017).alpha            1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(gw_2017).edf              1.326e+00 9.987e-01 1.008e+00 3.388e+00      7.459
+s(onset_2017).tau21         7.779e+00 1.169e-04 2.620e-01 7.322e+01   3370.678
+s(onset_2017).alpha         1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(onset_2017).edf           1.790e+00 9.986e-01 1.275e+00 4.686e+00      8.245
+s(monsoon_onset_dev).tau21  7.665e+00 2.474e-04 1.551e-01 7.089e+01     16.446
+s(monsoon_onset_dev).alpha  1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(monsoon_onset_dev).edf    1.930e+00 9.996e-01 1.214e+00 5.147e+00      3.687
+s(median_onset_82_15).tau21 2.959e+01 8.439e-04 1.024e+01 1.830e+02     18.779
+s(median_onset_82_15).alpha 1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(median_onset_82_15).edf   3.182e+00 1.001e+00 3.276e+00 6.208e+00      3.766
+s(sd_onset_82_15).tau21     1.316e+01 1.644e-03 1.563e+00 8.969e+01      0.537
+s(sd_onset_82_15).alpha     1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(sd_onset_82_15).edf       2.170e+00 1.002e+00 1.801e+00 5.006e+00      1.379
+s(District,id='mrf1').tau21 3.089e+01 1.575e+01 2.914e+01 5.586e+01   1484.368
+s(District,id='mrf1').alpha 1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(District,id='mrf1').edf   3.430e+01 3.394e+01 3.431e+01 3.457e+01     34.979
+s(District,id='re2').tau21  1.606e+04 1.019e+04 1.539e+04 2.517e+04      1.087
+s(District,id='re2').alpha  1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(District,id='re2').edf    3.599e+01 3.599e+01 3.599e+01 3.600e+01     35.240
+---
+Formula mu2:
+---
+b_grain_yield_ton_per_ha_rice ~ 1 + rice_duration_class_long + 
+    s(Res_rice_sow) + s(g_q5305_irrig_times_rice) + s(nperha_rice) + 
+    s(p2o5perha_rice) + s(District, bs = "mrf", xt = list(penalty = K)) + 
+    s(District, bs = "re")
+-
+Parametric coefficients:
+                            Mean    2.5%     50%   97.5% parameters
+(Intercept)              2.16281 0.43171 1.97757 3.90909      0.000
+rice_duration_class_long 0.10345 0.03601 0.10329 0.17645      0.096
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+-
+Smooth terms:
+                                       Mean      2.5%       50%     97.5%
+s(Res_rice_sow).tau21             2.939e+00 7.670e-02 1.377e+00 1.492e+01
+s(Res_rice_sow).alpha             1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(Res_rice_sow).edf               5.543e+00 2.630e+00 5.592e+00 8.087e+00
+s(g_q5305_irrig_times_rice).tau21 1.715e+00 2.310e-01 1.227e+00 5.434e+00
+s(g_q5305_irrig_times_rice).alpha 1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(g_q5305_irrig_times_rice).edf   6.171e+00 4.441e+00 6.195e+00 7.609e+00
+s(nperha_rice).tau21              7.856e-01 5.357e-03 3.042e-01 3.674e+00
+s(nperha_rice).alpha              1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(nperha_rice).edf                3.921e+00 1.288e+00 3.786e+00 6.668e+00
+s(p2o5perha_rice).tau21           2.061e-01 1.334e-04 3.188e-02 1.348e+00
+s(p2o5perha_rice).alpha           1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(p2o5perha_rice).edf             2.348e+00 1.010e+00 2.059e+00 5.205e+00
+s(District,id='mrf1').tau21       3.043e-03 8.435e-05 1.067e-03 1.628e-02
+s(District,id='mrf1').alpha       1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(District,id='mrf1').edf         1.462e+01 2.134e+00 1.342e+01 3.017e+01
+s(District,id='re2').tau21        4.974e+00 1.229e-01 4.138e+00 1.460e+01
+s(District,id='re2').alpha        1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(District,id='re2').edf          3.529e+01 3.323e+01 3.577e+01 3.593e+01
+                                  parameters
+s(Res_rice_sow).tau21                 16.244
+s(Res_rice_sow).alpha                     NA
+s(Res_rice_sow).edf                    8.170
+s(g_q5305_irrig_times_rice).tau21      1.698
+s(g_q5305_irrig_times_rice).alpha         NA
+s(g_q5305_irrig_times_rice).edf        6.538
+s(nperha_rice).tau21                   0.991
+s(nperha_rice).alpha                      NA
+s(nperha_rice).edf                     5.103
+s(p2o5perha_rice).tau21                0.172
+s(p2o5perha_rice).alpha                   NA
+s(p2o5perha_rice).edf                  3.239
+s(District,id='mrf1').tau21            0.035
+s(District,id='mrf1').alpha               NA
+s(District,id='mrf1').edf             32.259
+s(District,id='re2').tau21             8.948
+s(District,id='re2').alpha                NA
+s(District,id='re2').edf              35.894
+---
+Formula mu3:
+---
+sowdate_fmt_wheat_day ~ 1 + variety_type_NMWV + s(harvest_day_rice) + 
+    s(District, bs = "mrf", xt = list(penalty = K)) + s(District, 
+    bs = "re")
+-
+Parametric coefficients:
+                     Mean    2.5%     50%   97.5% parameters
+(Intercept)       114.655 109.483 114.481 120.587      3.830
+variety_type_NMWV  -3.072  -3.742  -3.074  -2.460     -3.073
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+-
+Smooth terms:
+                                 Mean      2.5%       50%     97.5% parameters
+s(harvest_day_rice).tau21     228.435    44.388   160.237   704.149   1035.210
+s(harvest_day_rice).alpha       1.000     1.000     1.000     1.000         NA
+s(harvest_day_rice).edf         5.934     4.524     5.898     7.396      8.391
+s(District,id='mrf1').tau21    54.003     9.448    45.568   154.095   4326.923
+s(District,id='mrf1').alpha     1.000     1.000     1.000     1.000         NA
+s(District,id='mrf1').edf      34.590    33.755    34.685    34.847     34.994
+s(District,id='re2').tau21  49904.116 32148.970 48241.930 80332.511      1.087
+s(District,id='re2').alpha      1.000     1.000     1.000     1.000         NA
+s(District,id='re2').edf       35.999    35.998    35.999    35.999     35.240
+---
+Formula mu4:
+---
+l_ton_per_hectare ~ 1 + variety_type_NMWV + s(Res_wheat_sow) + 
+    g_q5305_irrig_times + nperha + p2o5perha + s(District, bs = "mrf", 
+    xt = list(penalty = K)) + s(District, bs = "re")
+-
+Parametric coefficients:
+                          Mean       2.5%        50%      97.5% parameters
+(Intercept)         -0.3451667 -0.9637935 -0.4133652  0.3762429     -1.419
+variety_type_NMWV    0.3422512  0.2824899  0.3429785  0.3966410      0.337
+g_q5305_irrig_times  0.4219196  0.3932712  0.4221273  0.4494278      0.424
+nperha               0.0015496  0.0009547  0.0015550  0.0021134      0.002
+p2o5perha            0.0025587  0.0014420  0.0025588  0.0036574      0.002
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+-
+Smooth terms:
+                                 Mean      2.5%       50%     97.5% parameters
+s(Res_wheat_sow).tau21      1.861e-02 7.837e-05 1.649e-03 1.452e-01      0.238
+s(Res_wheat_sow).alpha      1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(Res_wheat_sow).edf        1.607e+00 1.011e+00 1.202e+00 3.875e+00      4.795
+s(District,id='mrf1').tau21 1.002e-02 5.295e-05 5.635e-03 4.258e-02      0.010
+s(District,id='mrf1').alpha 1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(District,id='mrf1').edf   2.528e+01 2.963e+00 2.938e+01 3.356e+01     31.282
+s(District,id='re2').tau21  3.750e+00 1.161e+00 3.640e+00 7.588e+00      5.082
+s(District,id='re2').alpha  1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(District,id='re2').edf    3.586e+01 3.568e+01 3.588e+01 3.594e+01     35.915
+---
+Formula lamdiag1:
+---
+lamdiag1 ~ 1
+-
+Parametric coefficients:
+              Mean   2.5%    50%  97.5% parameters
+(Intercept) -2.216 -2.236 -2.216 -2.194     -2.207
+-
+Acceptance probability:
+        Mean   2.5%    50% 97.5%
+alpha 0.9896 0.9035 1.0000     1
+---
+Formula lamdiag2:
+---
+lamdiag2 ~ 1
+-
+Parametric coefficients:
+               Mean    2.5%     50%   97.5% parameters
+(Intercept) 0.06651 0.04523 0.06601 0.08788      0.074
+-
+Acceptance probability:
+        Mean   2.5%    50% 97.5%
+alpha 0.9913 0.9196 1.0000     1
+---
+Formula lamdiag3:
+---
+lamdiag3 ~ 1
+-
+Parametric coefficients:
+              Mean   2.5%    50%  97.5% parameters
+(Intercept) -2.145 -2.167 -2.145 -2.126     -2.141
+-
+Acceptance probability:
+        Mean   2.5%    50% 97.5%
+alpha 0.9896 0.9163 1.0000     1
+---
+Formula lamdiag4:
+---
+lamdiag4 ~ 1
+-
+Parametric coefficients:
+              Mean   2.5%    50%  97.5% parameters
+(Intercept) 0.5178 0.4983 0.5173 0.5394      0.527
+-
+Acceptance probability:
+        Mean   2.5%    50% 97.5%
+alpha 0.9910 0.9175 1.0000     1
+---
+Formula lambda12:
+---
+lambda12 ~ 1
+-
+Parametric coefficients:
+                 Mean      2.5%       50%     97.5% parameters
+(Intercept) -0.011213 -0.045104 -0.007393  0.028365     -0.004
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+---
+Formula lambda13:
+---
+lambda13 ~ 1
+-
+Parametric coefficients:
+                Mean     2.5%      50%    97.5% parameters
+(Intercept) 0.007309 0.003664 0.007292 0.010696      0.008
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+---
+Formula lambda14:
+---
+lambda14 ~ 1
+-
+Parametric coefficients:
+               Mean    2.5%     50%   97.5% parameters
+(Intercept) 0.01113 0.00202 0.01088 0.01917      0.011
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+---
+Formula lambda23:
+---
+lambda23 ~ 1
+-
+Parametric coefficients:
+                 Mean      2.5%       50%     97.5% parameters
+(Intercept)  0.023714 -0.007921  0.023630  0.055818      0.027
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+---
+Formula lambda24:
+---
+lambda24 ~ s(District, bs = "mrf", xt = list(penalty = K)) + 
+    s(District, bs = "re")
+-
+Parametric coefficients:
+               Mean    2.5%     50%   97.5% parameters
+(Intercept) -0.2382 -0.2908 -0.2359 -0.1996     -0.036
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+-
+Smooth terms:
+                                 Mean      2.5%       50%     97.5% parameters
+s(District,id='mrf1').tau21 2.387e-03 1.004e-04 2.022e-03 6.647e-03      0.005
+s(District,id='mrf1').alpha 1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(District,id='mrf1').edf   1.479e+01 1.863e+00 1.601e+01 2.430e+01     22.153
+s(District,id='re2').tau21  9.553e-03 1.586e-04 6.116e-03 3.340e-02      0.024
+s(District,id='re2').alpha  1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(District,id='re2').edf    1.374e+01 6.443e-01 1.415e+01 2.686e+01     24.454
+---
+Formula lambda34:
+---
+lambda34 ~ 1
+-
+Parametric coefficients:
+                Mean     2.5%      50%    97.5% parameters
+(Intercept) -0.07590 -0.11822 -0.08111 -0.01156     -0.009
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+---
+Sampler summary:
+-
+DIC = 85815.46 logLik = -42797.02 pd = 221.4134
+runtime = 466.83
+---
+Optimizer summary:
+-
+AICc = 86202.37 edf = 404.1805 logLik = -42657.27
+logPost = -2412333 nobs = 4527 runtime = 48.67</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>nd <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="st">"District"</span> <span class="ot">=</span> <span class="fu">unique</span>(Irrig_Rev_rice_wheat<span class="sc">$</span>District))</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Focusing on the cross-equation correlations</span></span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a><span class="do">## Predict for the structured spatial effects.</span></span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>p_str_multivariate_geo_sow_MRF_corr_endo_rice_y <span class="ot">&lt;-</span> <span class="fu">predict</span>(multivariate_geo_sow_MRF_corr_endo, <span class="at">newdata =</span> nd, <span class="at">term =</span> <span class="st">"s(District,id='mrf1')"</span>, <span class="at">intercept =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-8"><a href="#cb57-8" aria-hidden="true" tabindex="-1"></a>p_str_multivariate_geo_sow_MRF_corr_endo_rice_ydt <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(p_str_multivariate_geo_sow_MRF_corr_endo_rice_y)</span>
+<span id="cb57-9"><a href="#cb57-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-10"><a href="#cb57-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-11"><a href="#cb57-11" aria-hidden="true" tabindex="-1"></a><span class="do">## And the unstructured spatial effect.</span></span>
+<span id="cb57-12"><a href="#cb57-12" aria-hidden="true" tabindex="-1"></a>p_unstr_multivariate_geo_sow_MRF_corr_endo_rice_y <span class="ot">&lt;-</span> <span class="fu">predict</span>(multivariate_geo_sow_MRF_corr_endo, <span class="at">newdata =</span> nd, <span class="at">term =</span> <span class="st">"s(District,id='re2')"</span>, <span class="at">intercept =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb57-13"><a href="#cb57-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-14"><a href="#cb57-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Rice sowing spatial equation</span></span>
+<span id="cb57-15"><a href="#cb57-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-16"><a href="#cb57-16" aria-hidden="true" tabindex="-1"></a><span class="fu">plotmap</span>(India_aoi_sp_bnd, <span class="at">x =</span> p_str_multivariate_geo_sow_MRF_corr_endo_rice_y<span class="sc">$</span>mu1, <span class="at">id =</span> nd<span class="sc">$</span>District, <span class="at">main =</span> <span class="fu">expression</span>(<span class="fu">mu</span>(rice_sowing)), <span class="at">title =</span> <span class="st">"Structured spatial effect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotmap</span>(India_aoi_sp_bnd, <span class="at">x =</span> p_unstr_multivariate_geo_sow_MRF_corr_endo_rice_y<span class="sc">$</span>mu1, <span class="at">id =</span> nd<span class="sc">$</span>District, <span class="at">main =</span> <span class="fu">expression</span>(<span class="fu">mu</span>(rice_sowing)), <span class="at">title =</span> <span class="st">"Unstructured spatial effect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Rice yield spatial equation</span></span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plotmap</span>(India_aoi_sp_bnd, <span class="at">x =</span> p_str_multivariate_geo_sow_MRF_corr_endo_rice_y<span class="sc">$</span>mu2, <span class="at">id =</span> nd<span class="sc">$</span>District, <span class="at">main =</span> <span class="fu">expression</span>(<span class="fu">mu</span>(rice_yield)), <span class="at">title =</span> <span class="st">"Structured spatial effect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotmap</span>(India_aoi_sp_bnd, <span class="at">x =</span> p_unstr_multivariate_geo_sow_MRF_corr_endo_rice_y<span class="sc">$</span>mu2, <span class="at">id =</span> nd<span class="sc">$</span>District, <span class="at">main =</span> <span class="fu">expression</span>(<span class="fu">mu</span>(rice_yield)), <span class="at">title =</span> <span class="st">"Unstructured spatial effect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-4.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Wheat sowing equation</span></span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plotmap</span>(India_aoi_sp_bnd, <span class="at">x =</span> p_str_multivariate_geo_sow_MRF_corr_endo_rice_y<span class="sc">$</span>mu3, <span class="at">id =</span> nd<span class="sc">$</span>District, <span class="at">main =</span> <span class="fu">expression</span>(<span class="fu">mu</span>(wheat_sowing)), <span class="at">title =</span> <span class="st">"Structured spatial effect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-5.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotmap</span>(India_aoi_sp_bnd, <span class="at">x =</span> p_unstr_multivariate_geo_sow_MRF_corr_endo_rice_y<span class="sc">$</span>mu3, <span class="at">id =</span> nd<span class="sc">$</span>District, <span class="at">main =</span> <span class="fu">expression</span>(<span class="fu">mu</span>(wheat_sowing)), <span class="at">title =</span> <span class="st">"Unstructured spatial effect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-6.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Wheat yield spatial equation</span></span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plotmap</span>(India_aoi_sp_bnd, <span class="at">x =</span> p_str_multivariate_geo_sow_MRF_corr_endo_rice_y<span class="sc">$</span>mu4, <span class="at">id =</span> nd<span class="sc">$</span>District, <span class="at">main =</span> <span class="fu">expression</span>(<span class="fu">mu</span>(wheat_yield)), <span class="at">title =</span> <span class="st">"Structured spatial effect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-7.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotmap</span>(India_aoi_sp_bnd, <span class="at">x =</span> p_unstr_multivariate_geo_sow_MRF_corr_endo_rice_y<span class="sc">$</span>mu4, <span class="at">id =</span> nd<span class="sc">$</span>District, <span class="at">main =</span> <span class="fu">expression</span>(<span class="fu">mu</span>(wheat_yield)), <span class="at">title =</span> <span class="st">"Unstructured spatial effect"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-8.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Focusing on the cross-equation correlations</span></span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a><span class="do">## MRF smooth effect.</span></span>
+<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plotmap</span>(India_aoi_sp_bnd,</span>
+<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> p_str_multivariate_geo_sow_MRF_corr_endo_rice_y<span class="sc">$</span>lambda24, <span class="at">id =</span> nd<span class="sc">$</span>District,</span>
+<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">main =</span> <span class="fu">expression</span>(<span class="fu">lambda</span>(rice, wheat)), <span class="at">title =</span> <span class="st">"Structured spatial effect"</span></span>
+<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-9.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Random effects.</span></span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plotmap</span>(India_aoi_sp_bnd,</span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> p_unstr_multivariate_geo_sow_MRF_corr_endo_rice_y<span class="sc">$</span>lambda24, <span class="at">id =</span> nd<span class="sc">$</span>District, <span class="at">main =</span> <span class="fu">expression</span>(<span class="fu">lambda</span>(rice, wheat)), <span class="at">title =</span> <span class="st">"Unstructured spatial effect"</span></span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-10.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Rice sowing equation : Non-linear relationships</span></span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a><span class="co"># s(gw_2017) + s(onset_2017) + s(monsoon_onset_dev) + s(median_onset_82_15) + s(sd_onset_82_15)</span></span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(multivariate_geo_sow_MRF_corr_endo, <span class="at">model =</span> <span class="st">"mu1"</span>, <span class="at">term =</span> <span class="st">"s(gw_2017)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-11.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(multivariate_geo_sow_MRF_corr_endo, <span class="at">model =</span> <span class="st">"mu1"</span>, <span class="at">term =</span> <span class="st">"s(onset_2017)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-12.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(multivariate_geo_sow_MRF_corr_endo, <span class="at">model =</span> <span class="st">"mu1"</span>, <span class="at">term =</span> <span class="st">"s(monsoon_onset_dev)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-13.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(multivariate_geo_sow_MRF_corr_endo, <span class="at">model =</span> <span class="st">"mu1"</span>, <span class="at">term =</span> <span class="st">"s(median_onset_82_15)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-14.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(multivariate_geo_sow_MRF_corr_endo, <span class="at">model =</span> <span class="st">"mu1"</span>, <span class="at">term =</span> <span class="st">"s(sd_onset_82_15)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-15.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Rice yield equation</span></span>
+<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a><span class="co"># s(Res_rice_sow) + s(g_q5305_irrig_times_rice) + s(nperha_rice) + s(p2o5perha_rice)</span></span>
+<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(multivariate_geo_sow_MRF_corr_endo, <span class="at">model =</span> <span class="st">"mu2"</span>, <span class="at">term =</span> <span class="st">"s(Res_rice_sow)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-16.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(multivariate_geo_sow_MRF_corr_endo, <span class="at">model =</span> <span class="st">"mu2"</span>, <span class="at">term =</span> <span class="st">"s(g_q5305_irrig_times_rice)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-17.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(multivariate_geo_sow_MRF_corr_endo, <span class="at">model =</span> <span class="st">"mu2"</span>, <span class="at">term =</span> <span class="st">"s(nperha_rice)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-18.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(multivariate_geo_sow_MRF_corr_endo, <span class="at">model =</span> <span class="st">"mu2"</span>, <span class="at">term =</span> <span class="st">"s(p2o5perha_rice)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-19.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Wheat sowing equation</span></span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a><span class="co"># s(harvest_day_rice) + s(gw_2018)</span></span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(multivariate_geo_sow_MRF_corr_endo, <span class="at">model =</span> <span class="st">"mu3"</span>, <span class="at">term =</span> <span class="st">"s(harvest_day_rice)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-20.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="co"># (multivariate_geo_sow_MRF_corr_endo, model = "mu3", term = "s(gw_2018)")</span></span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Wheat yield equation</span></span>
+<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(multivariate_geo_sow_MRF_corr_endo, <span class="at">model =</span> <span class="st">"mu4"</span>, <span class="at">term =</span> <span class="st">"s(Res_wheat_sow)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-21.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fitted values</span></span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a>multivariate_geo_sow_MRF_corr_endo_fitted_values <span class="ot">&lt;-</span> multivariate_geo_sow_MRF_corr_endo<span class="sc">$</span>fitted</span>
+<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a>multivariate_geo_sow_MRF_corr_endo_fitted_values <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(multivariate_geo_sow_MRF_corr_endo_fitted_values)</span>
+<span id="cb78-5"><a href="#cb78-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge the fitted results to the data and export</span></span>
+<span id="cb78-7"><a href="#cb78-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-8"><a href="#cb78-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-9"><a href="#cb78-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-10"><a href="#cb78-10" aria-hidden="true" tabindex="-1"></a>Irrig_Rev_rice_wheat_Mult_Res <span class="ot">&lt;-</span> <span class="fu">cbind</span>(Irrig_Rev_rice_wheat, multivariate_geo_sow_MRF_corr_endo_fitted_values)</span>
+<span id="cb78-11"><a href="#cb78-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-12"><a href="#cb78-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-13"><a href="#cb78-13" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">lm</span>(sowdate_fmt_rice_day <span class="sc">~</span> mu1, Irrig_Rev_rice_wheat_Mult_Res))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = sowdate_fmt_rice_day ~ mu1, data = Irrig_Rev_rice_wheat_Mult_Res)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-44.574  -5.397  -0.269   4.986  44.985 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept) -0.03383    3.41385   -0.01    0.992    
+mu1          1.00018    0.01771   56.48   &lt;2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 9.093 on 4525 degrees of freedom
+Multiple R-squared:  0.4135,    Adjusted R-squared:  0.4134 
+F-statistic:  3190 on 1 and 4525 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">lm</span>(b_grain_yield_ton_per_ha_rice <span class="sc">~</span> l_ton_per_hectare, Irrig_Rev_rice_wheat_Mult_Res))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = b_grain_yield_ton_per_ha_rice ~ l_ton_per_hectare, 
+    data = Irrig_Rev_rice_wheat_Mult_Res)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-3.2891 -0.7976 -0.0052  0.7454  3.3894 
+
+Coefficients:
+                  Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)        3.34109    0.05974   55.93   &lt;2e-16 ***
+l_ton_per_hectare  0.22766    0.01958   11.63   &lt;2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 1.08 on 4525 degrees of freedom
+Multiple R-squared:  0.02901,   Adjusted R-squared:  0.0288 
+F-statistic: 135.2 on 1 and 4525 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>((<span class="fu">lm</span>(sowdate_fmt_rice_day <span class="sc">~</span> mu1, Irrig_Rev_rice_wheat_Mult_Res)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-22.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-23.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-24.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Quarto_tool_files/figure-html/unnamed-chunk-3-25.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a>Irrig_Rev_rice_wheat_Mult_Res_sp <span class="ot">&lt;-</span> Irrig_Rev_rice_wheat_Mult_Res</span>
+<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a><span class="fu">coordinates</span>(Irrig_Rev_rice_wheat_Mult_Res_sp) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"o_largest_plot_gps_longitude"</span>, <span class="st">"o_largest_plot_gps_latitude"</span>)</span>
+<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb83-4"><a href="#cb83-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Map the correlations</span></span>
+<span id="cb83-5"><a href="#cb83-5" aria-hidden="true" tabindex="-1"></a><span class="co"># library(modelsummary)</span></span>
+<span id="cb83-6"><a href="#cb83-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Irrig_Rev_rice_wheat_Mult_Res_dist &lt;- datasummary(Heading("District") * District ~ Heading("N obs") * N + Heading("%") * Percent() + lambda24 * (Mean + SD), data = Irrig_Rev_rice_wheat_Mult_Res, output = "data.frame")</span></span>
+<span id="cb83-7"><a href="#cb83-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb83-8"><a href="#cb83-8" aria-hidden="true" tabindex="-1"></a><span class="co"># library(dplyr)</span></span>
+<span id="cb83-9"><a href="#cb83-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Irrig_Rev_rice_wheat_Mult_Res_dist &lt;- rename(Irrig_Rev_rice_wheat_Mult_Res_dist, "Mean_Rice_Wheat_Rho" = "Mean")</span></span>
+<span id="cb83-10"><a href="#cb83-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Irrig_Rev_rice_wheat_Mult_Res_dist &lt;- rename(Irrig_Rev_rice_wheat_Mult_Res_dist, "SD_Rice_Wheat_Rho" = "SD")</span></span>
+<span id="cb83-11"><a href="#cb83-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb83-12"><a href="#cb83-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Irrig_Rev_rice_wheat_Mult_Res_dist &lt;- subset(Irrig_Rev_rice_wheat_Mult_Res_dist, Irrig_Rev_rice_wheat_Mult_Res_dist$District != "Purnia")</span></span>
+<span id="cb83-13"><a href="#cb83-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb83-14"><a href="#cb83-14" aria-hidden="true" tabindex="-1"></a><span class="co"># rice_wheat_yield_rho_dist_sf &lt;- merge(India_aoi_sf, Irrig_Rev_rice_wheat_Mult_Res_dist, by = "District")</span></span>
+<span id="cb83-15"><a href="#cb83-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb83-16"><a href="#cb83-16" aria-hidden="true" tabindex="-1"></a><span class="co"># rice_wheat_yield_rho_dist_sf$Mean_Rice_Wheat_Rho &lt;- as.numeric(rice_wheat_yield_rho_dist_sf$Mean_Rice_Wheat_Rho)</span></span>
+<span id="cb83-17"><a href="#cb83-17" aria-hidden="true" tabindex="-1"></a><span class="co"># library(mapview)</span></span>
+<span id="cb83-18"><a href="#cb83-18" aria-hidden="true" tabindex="-1"></a><span class="co"># mapview(rice_wheat_yield_rho_dist_sf, zcol = "Mean_Rice_Wheat_Rho", layer.name = "Rice wheat equation correlation")</span></span>
+<span id="cb83-19"><a href="#cb83-19" aria-hidden="true" tabindex="-1"></a><span class="co"># library(sf)</span></span>
+<span id="cb83-20"><a href="#cb83-20" aria-hidden="true" tabindex="-1"></a><span class="co"># rice_wheat_yield_rho_dist_sf_sp &lt;- as_Spatial(rice_wheat_yield_rho_dist_sf)</span></span>
+<span id="cb83-21"><a href="#cb83-21" aria-hidden="true" tabindex="-1"></a><span class="co"># library(tmap)</span></span>
+<span id="cb83-22"><a href="#cb83-22" aria-hidden="true" tabindex="-1"></a><span class="co"># tmap_mode("view")</span></span>
+<span id="cb83-23"><a href="#cb83-23" aria-hidden="true" tabindex="-1"></a><span class="co"># rice_wheat_yield_rho_dist_sf_sp_map &lt;- tm_shape(rice_wheat_yield_rho_dist_sf_sp) +</span></span>
+<span id="cb83-24"><a href="#cb83-24" aria-hidden="true" tabindex="-1"></a><span class="co">#     tm_polygons(col = "Mean_Rice_Wheat_Rho", title = "Rice wheat equation correlation", style = "quantile") +</span></span>
+<span id="cb83-25"><a href="#cb83-25" aria-hidden="true" tabindex="-1"></a><span class="co">#     tm_layout(legend.outside = TRUE)</span></span>
+<span id="cb83-26"><a href="#cb83-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb83-27"><a href="#cb83-27" aria-hidden="true" tabindex="-1"></a><span class="co"># tmap_save(rice_wheat_yield_rho_dist_sf_sp_map, "figures/rice_wheat_yield_rho_dist_sf_sp_map .png")</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="factors-affecting-the-correlation-structure" class="level1">
+<h1>Factors affecting the correlation structure</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a>f_rice_wheat_yield_MRF_corr_endo_General <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>    sowdate_fmt_rice_day <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> rice_duration_class_long <span class="sc">+</span> <span class="fu">s</span>(gw_2017) <span class="sc">+</span> <span class="fu">s</span>(onset_2017) <span class="sc">+</span> <span class="fu">s</span>(monsoon_onset_dev) <span class="sc">+</span> <span class="fu">s</span>(median_onset_82_15) <span class="sc">+</span> <span class="fu">s</span>(sd_onset_82_15) <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span></span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>        <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>),</span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>    b_grain_yield_ton_per_ha_rice <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> rice_duration_class_long <span class="sc">+</span> <span class="fu">s</span>(Res_rice_sow) <span class="sc">+</span> <span class="fu">s</span>(g_q5305_irrig_times_rice) <span class="sc">+</span> <span class="fu">s</span>(nperha_rice) <span class="sc">+</span> <span class="fu">s</span>(p2o5perha_rice) <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span></span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>        <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>),</span>
+<span id="cb84-6"><a href="#cb84-6" aria-hidden="true" tabindex="-1"></a>    sowdate_fmt_wheat_day <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> variety_type_NMWV <span class="sc">+</span> <span class="fu">s</span>(harvest_day_rice) <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span></span>
+<span id="cb84-7"><a href="#cb84-7" aria-hidden="true" tabindex="-1"></a>        <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>),</span>
+<span id="cb84-8"><a href="#cb84-8" aria-hidden="true" tabindex="-1"></a>    l_ton_per_hectare <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> variety_type_NMWV <span class="sc">+</span> <span class="fu">s</span>(Res_wheat_sow) <span class="sc">+</span> g_q5305_irrig_times <span class="sc">+</span> nperha <span class="sc">+</span> p2o5perha <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>),</span>
+<span id="cb84-9"><a href="#cb84-9" aria-hidden="true" tabindex="-1"></a>    lamdiag1 <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb84-10"><a href="#cb84-10" aria-hidden="true" tabindex="-1"></a>    lamdiag2 <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb84-11"><a href="#cb84-11" aria-hidden="true" tabindex="-1"></a>    lamdiag3 <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb84-12"><a href="#cb84-12" aria-hidden="true" tabindex="-1"></a>    lamdiag4 <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb84-13"><a href="#cb84-13" aria-hidden="true" tabindex="-1"></a>    lambda12 <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb84-14"><a href="#cb84-14" aria-hidden="true" tabindex="-1"></a>    lambda13 <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb84-15"><a href="#cb84-15" aria-hidden="true" tabindex="-1"></a>    lambda14 <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb84-16"><a href="#cb84-16" aria-hidden="true" tabindex="-1"></a>    lambda23 <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb84-17"><a href="#cb84-17" aria-hidden="true" tabindex="-1"></a>    lambda24 <span class="sc">~</span> <span class="fu">s</span>(gw_2017)<span class="sc">+</span><span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"mrf"</span>, <span class="at">xt =</span> <span class="fu">list</span>(<span class="st">"penalty"</span> <span class="ot">=</span> K)) <span class="sc">+</span> <span class="fu">s</span>(District, <span class="at">bs =</span> <span class="st">"re"</span>),</span>
+<span id="cb84-18"><a href="#cb84-18" aria-hidden="true" tabindex="-1"></a>    lambda34 <span class="sc">~</span> <span class="dv">1</span></span>
+<span id="cb84-19"><a href="#cb84-19" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb84-20"><a href="#cb84-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-21"><a href="#cb84-21" aria-hidden="true" tabindex="-1"></a>multivariate_geo_sow_MRF_corr_endo_General <span class="ot">&lt;-</span> <span class="fu">bamlss</span>(f_rice_wheat_yield_MRF_corr_endo_General, <span class="at">type =</span> <span class="st">"modified"</span>, <span class="at">family =</span> <span class="fu">mvnchol_bamlss</span>(<span class="at">k =</span> <span class="dv">4</span>), <span class="at">data =</span> Irrig_Rev_rice_wheat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>AICc 349479.0 logPost -2543604 logLik -174260. edf 432.85 eps 1.0000 iteration   1
+AICc 157745.3 logPost -2447296 logLik -78381.2 edf 443.21 eps 0.1854 iteration   2
+AICc 104308.9 logPost -2420161 logLik -51666.0 edf 440.78 eps 0.2158 iteration   3
+AICc 89318.46 logPost -2412624 logLik -44188.5 edf 426.28 eps 0.1451 iteration   4
+AICc 86454.46 logPost -2411205 logLik -42767.5 edf 417.25 eps 0.0645 iteration   5
+AICc 86233.78 logPost -2411090 logLik -42660.5 edf 414.43 eps 0.0206 iteration   6
+AICc 86217.50 logPost -2411085 logLik -42657.7 edf 410.02 eps 0.0028 iteration   7
+AICc 86214.90 logPost -2411082 logLik -42656.8 edf 409.71 eps 0.0010 iteration   8
+AICc 86213.39 logPost -2411080 logLik -42656.3 edf 409.50 eps 0.0007 iteration   9
+AICc 86212.40 logPost -2411078 logLik -42656.0 edf 409.31 eps 0.0045 iteration  10
+AICc 86207.19 logPost -2411196 logLik -42655.9 edf 407.25 eps 0.0012 iteration  11
+AICc 86206.82 logPost -2411195 logLik -42655.9 edf 407.14 eps 0.0003 iteration  12
+AICc 86204.18 logPost -2412413 logLik -42655.8 edf 406.07 eps 0.0003 iteration  13
+AICc 86204.09 logPost -2412336 logLik -42655.8 edf 406.05 eps 0.0007 iteration  14
+AICc 86204.03 logPost -2412276 logLik -42655.8 edf 406.03 eps 0.0002 iteration  15
+AICc 86203.96 logPost -2412276 logLik -42655.8 edf 406.01 eps 0.0001 iteration  16
+AICc 86203.91 logPost -2412276 logLik -42655.8 edf 405.99 eps 0.0001 iteration  17
+AICc 86203.91 logPost -2412276 logLik -42655.8 edf 405.99 eps 0.0001 iteration  17
+elapsed time: 50.03sec
+Starting the sampler...
+
+|                    |   0%  6.51min
+|*                   |   5%  6.18min 19.52sec
+|**                  |  10%  5.80min 38.66sec
+|***                 |  15%  5.48min 58.03sec
+|****                |  20%  5.34min  1.33min
+|*****               |  25%  5.19min  1.73min
+|******              |  30%  4.96min  2.13min
+|*******             |  35%  4.68min  2.52min
+|********            |  40%  4.39min  2.92min
+|*********           |  45%  4.06min  3.32min
+|**********          |  50%  3.72min  3.72min
+|***********         |  55%  3.37min  4.12min
+|************        |  60%  3.01min  4.51min
+|*************       |  65%  2.64min  4.90min
+|**************      |  70%  2.27min  5.30min
+|***************     |  75%  1.90min  5.69min
+|****************    |  80%  1.52min  6.08min
+|*****************   |  85%  1.14min  6.48min
+|******************  |  90% 45.79sec  6.87min
+|******************* |  95% 22.93sec  7.26min
+|********************| 100%  0.00sec  7.65min</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(multivariate_geo_sow_MRF_corr_endo_General)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+bamlss(formula = f_rice_wheat_yield_MRF_corr_endo_General, family = mvnchol_bamlss(k = 4), 
+    data = Irrig_Rev_rice_wheat, type = "modified")
+---
+Family: mvnchol 
+Link function: mu1 = identity, mu2 = identity, mu3 = identity, mu4 = identity, lamdiag1 = log, lamdiag2 = log, lamdiag3 = log, lamdiag4 = log, lambda12 = identity, lambda13 = identity, lambda14 = identity, lambda23 = identity, lambda24 = identity, lambda34 = identity
+*---
+Formula mu1:
+---
+sowdate_fmt_rice_day ~ 1 + rice_duration_class_long + s(gw_2017) + 
+    s(onset_2017) + s(monsoon_onset_dev) + s(median_onset_82_15) + 
+    s(sd_onset_82_15) + s(District, bs = "mrf", xt = list(penalty = K)) + 
+    s(District, bs = "re")
+-
+Parametric coefficients:
+                            Mean    2.5%     50%   97.5% parameters
+(Intercept)              71.3421 66.6505 71.2306 76.3630      2.031
+rice_duration_class_long -1.3725 -2.0659 -1.3734 -0.7002     -1.342
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+-
+Smooth terms:
+                                 Mean      2.5%       50%     97.5% parameters
+s(gw_2017).tau21            2.783e+01 3.293e-02 6.432e+00 1.946e+02    428.733
+s(gw_2017).alpha            1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(gw_2017).edf              2.672e+00 1.023e+00 2.494e+00 5.730e+00      7.459
+s(onset_2017).tau21         1.876e+00 6.997e-05 1.240e-02 2.299e+01   3363.637
+s(onset_2017).alpha         1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(onset_2017).edf           1.333e+00 9.976e-01 1.016e+00 3.611e+00      8.244
+s(monsoon_onset_dev).tau21  7.569e+00 7.212e-04 4.383e-01 5.875e+01     15.486
+s(monsoon_onset_dev).alpha  1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(monsoon_onset_dev).edf    2.046e+00 1.001e+00 1.480e+00 5.042e+00      3.633
+s(median_onset_82_15).tau21 1.339e+01 1.459e-04 4.668e-02 1.026e+02     18.784
+s(median_onset_82_15).alpha 1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(median_onset_82_15).edf   2.045e+00 9.990e-01 1.063e+00 5.504e+00      3.766
+s(sd_onset_82_15).tau21     3.826e+00 1.450e-04 2.333e-02 4.081e+01      0.554
+s(sd_onset_82_15).alpha     1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(sd_onset_82_15).edf       1.480e+00 9.990e-01 1.023e+00 4.173e+00      1.388
+s(District,id='mrf1').tau21 7.390e+01 3.864e+01 7.183e+01 1.273e+02   1481.527
+s(District,id='mrf1').alpha 1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(District,id='mrf1').edf   3.464e+01 3.443e+01 3.465e+01 3.479e+01     34.979
+s(District,id='re2').tau21  1.519e+04 9.677e+03 1.455e+04 2.354e+04      1.087
+s(District,id='re2').alpha  1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(District,id='re2').edf    3.599e+01 3.599e+01 3.599e+01 3.600e+01     35.240
+---
+Formula mu2:
+---
+b_grain_yield_ton_per_ha_rice ~ 1 + rice_duration_class_long + 
+    s(Res_rice_sow) + s(g_q5305_irrig_times_rice) + s(nperha_rice) + 
+    s(p2o5perha_rice) + s(District, bs = "mrf", xt = list(penalty = K)) + 
+    s(District, bs = "re")
+-
+Parametric coefficients:
+                            Mean    2.5%     50%   97.5% parameters
+(Intercept)              1.33448 0.07265 1.08753 3.51466      0.001
+rice_duration_class_long 0.09706 0.03197 0.09722 0.15912      0.095
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+-
+Smooth terms:
+                                       Mean      2.5%       50%     97.5%
+s(Res_rice_sow).tau21             2.419e+00 9.364e-02 1.038e+00 1.288e+01
+s(Res_rice_sow).alpha             1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(Res_rice_sow).edf               5.310e+00 2.798e+00 5.241e+00 7.992e+00
+s(g_q5305_irrig_times_rice).tau21 1.857e+00 2.474e-01 1.345e+00 6.468e+00
+s(g_q5305_irrig_times_rice).alpha 1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(g_q5305_irrig_times_rice).edf   6.226e+00 4.500e+00 6.274e+00 7.728e+00
+s(nperha_rice).tau21              7.115e-01 1.034e-02 3.575e-01 3.765e+00
+s(nperha_rice).alpha              1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(nperha_rice).edf                3.949e+00 1.483e+00 3.963e+00 6.671e+00
+s(p2o5perha_rice).tau21           3.420e-01 1.193e-04 3.836e-02 2.565e+00
+s(p2o5perha_rice).alpha           1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(p2o5perha_rice).edf             2.583e+00 1.008e+00 2.155e+00 5.870e+00
+s(District,id='mrf1').tau21       7.992e-03 8.542e-05 2.262e-03 4.889e-02
+s(District,id='mrf1').alpha       1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(District,id='mrf1').edf         1.855e+01 2.203e+00 1.895e+01 3.276e+01
+s(District,id='re2').tau21        8.530e+00 4.015e-01 8.099e+00 2.101e+01
+s(District,id='re2').alpha        1.000e+00 1.000e+00 1.000e+00 1.000e+00
+s(District,id='re2').edf          3.576e+01 3.472e+01 3.588e+01 3.595e+01
+                                  parameters
+s(Res_rice_sow).tau21                 15.978
+s(Res_rice_sow).alpha                     NA
+s(Res_rice_sow).edf                    8.159
+s(g_q5305_irrig_times_rice).tau21      1.718
+s(g_q5305_irrig_times_rice).alpha         NA
+s(g_q5305_irrig_times_rice).edf        6.551
+s(nperha_rice).tau21                   0.985
+s(nperha_rice).alpha                      NA
+s(nperha_rice).edf                     5.097
+s(p2o5perha_rice).tau21                0.172
+s(p2o5perha_rice).alpha                   NA
+s(p2o5perha_rice).edf                  3.240
+s(District,id='mrf1').tau21            0.035
+s(District,id='mrf1').alpha               NA
+s(District,id='mrf1').edf             32.263
+s(District,id='re2').tau21             8.982
+s(District,id='re2').alpha                NA
+s(District,id='re2').edf              35.894
+---
+Formula mu3:
+---
+sowdate_fmt_wheat_day ~ 1 + variety_type_NMWV + s(harvest_day_rice) + 
+    s(District, bs = "mrf", xt = list(penalty = K)) + s(District, 
+    bs = "re")
+-
+Parametric coefficients:
+                     Mean    2.5%     50%   97.5% parameters
+(Intercept)       107.729 105.228 107.925 109.056      3.830
+variety_type_NMWV  -3.071  -3.671  -3.072  -2.456     -3.073
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+-
+Smooth terms:
+                                 Mean      2.5%       50%     97.5% parameters
+s(harvest_day_rice).tau21     249.145    45.941   169.557   943.694   1033.860
+s(harvest_day_rice).alpha       1.000     1.000     1.000     1.000         NA
+s(harvest_day_rice).edf         5.867     4.288     5.819     7.667      8.391
+s(District,id='mrf1').tau21   273.044   152.159   257.988   484.946   4322.922
+s(District,id='mrf1').alpha     1.000     1.000     1.000     1.000         NA
+s(District,id='mrf1').edf      34.913    34.840    34.914    34.977     34.994
+s(District,id='re2').tau21  52391.176 32990.950 50597.124 79970.994      1.087
+s(District,id='re2').alpha      1.000     1.000     1.000     1.000         NA
+s(District,id='re2').edf       35.998    35.997    35.998    35.999     35.240
+---
+Formula mu4:
+---
+l_ton_per_hectare ~ 1 + variety_type_NMWV + s(Res_wheat_sow) + 
+    g_q5305_irrig_times + nperha + p2o5perha + s(District, bs = "mrf", 
+    xt = list(penalty = K)) + s(District, bs = "re")
+-
+Parametric coefficients:
+                          Mean       2.5%        50%      97.5% parameters
+(Intercept)         -0.7126342 -1.3986803 -0.8445395  0.2712965     -1.419
+variety_type_NMWV    0.3424046  0.2887866  0.3427579  0.3931747      0.337
+g_q5305_irrig_times  0.4231647  0.3972220  0.4229748  0.4504678      0.424
+nperha               0.0015341  0.0009313  0.0015484  0.0021222      0.002
+p2o5perha            0.0025301  0.0013402  0.0025688  0.0036608      0.003
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+-
+Smooth terms:
+                                 Mean      2.5%       50%     97.5% parameters
+s(Res_wheat_sow).tau21      2.950e-02 6.382e-05 2.565e-03 2.716e-01      0.233
+s(Res_wheat_sow).alpha      1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(Res_wheat_sow).edf        1.740e+00 1.009e+00 1.296e+00 4.531e+00      4.773
+s(District,id='mrf1').tau21 2.583e-03 6.088e-05 5.571e-04 2.028e-02      0.010
+s(District,id='mrf1').alpha 1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(District,id='mrf1').edf   1.662e+01 3.360e+00 1.473e+01 3.267e+01     31.294
+s(District,id='re2').tau21  5.518e+00 1.334e+00 5.472e+00 1.160e+01      5.107
+s(District,id='re2').alpha  1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(District,id='re2').edf    3.589e+01 3.571e+01 3.592e+01 3.596e+01     35.915
+---
+Formula lamdiag1:
+---
+lamdiag1 ~ 1
+-
+Parametric coefficients:
+              Mean   2.5%    50%  97.5% parameters
+(Intercept) -2.216 -2.237 -2.216 -2.196     -2.207
+-
+Acceptance probability:
+        Mean   2.5%    50% 97.5%
+alpha 0.9909 0.9239 1.0000     1
+---
+Formula lamdiag2:
+---
+lamdiag2 ~ 1
+-
+Parametric coefficients:
+               Mean    2.5%     50%   97.5% parameters
+(Intercept) 0.06601 0.04535 0.06603 0.08673      0.074
+-
+Acceptance probability:
+        Mean   2.5%    50% 97.5%
+alpha 0.9907 0.9241 1.0000     1
+---
+Formula lamdiag3:
+---
+lamdiag3 ~ 1
+-
+Parametric coefficients:
+              Mean   2.5%    50%  97.5% parameters
+(Intercept) -2.145 -2.166 -2.145 -2.125     -2.141
+-
+Acceptance probability:
+        Mean   2.5%    50% 97.5%
+alpha 0.9905 0.9188 1.0000     1
+---
+Formula lamdiag4:
+---
+lamdiag4 ~ 1
+-
+Parametric coefficients:
+              Mean   2.5%    50%  97.5% parameters
+(Intercept) 0.5179 0.4987 0.5176 0.5392      0.527
+-
+Acceptance probability:
+        Mean   2.5%    50% 97.5%
+alpha 0.9884 0.9012 1.0000     1
+---
+Formula lambda12:
+---
+lambda12 ~ 1
+-
+Parametric coefficients:
+                 Mean      2.5%       50%     97.5% parameters
+(Intercept) -0.019167 -0.039310 -0.018658  0.002473     -0.004
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+---
+Formula lambda13:
+---
+lambda13 ~ 1
+-
+Parametric coefficients:
+                Mean     2.5%      50%    97.5% parameters
+(Intercept) 0.006978 0.003265 0.007021 0.010635      0.008
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+---
+Formula lambda14:
+---
+lambda14 ~ 1
+-
+Parametric coefficients:
+                Mean     2.5%      50%    97.5% parameters
+(Intercept) 0.013333 0.008215 0.013348 0.019123      0.011
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+---
+Formula lambda23:
+---
+lambda23 ~ 1
+-
+Parametric coefficients:
+                 Mean      2.5%       50%     97.5% parameters
+(Intercept)  0.023332 -0.008003  0.023810  0.053160      0.027
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+---
+Formula lambda24:
+---
+lambda24 ~ s(gw_2017) + s(District, bs = "mrf", xt = list(penalty = K)) + 
+    s(District, bs = "re")
+-
+Parametric coefficients:
+               Mean    2.5%     50%   97.5% parameters
+(Intercept) -0.2375 -0.2912 -0.2359 -0.2011     -0.037
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+-
+Smooth terms:
+                                 Mean      2.5%       50%     97.5% parameters
+s(gw_2017).tau21            3.959e-02 8.403e-05 6.952e-03 2.810e-01      0.019
+s(gw_2017).alpha            1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(gw_2017).edf              1.600e+00 1.005e+00 1.309e+00 3.396e+00      1.644
+s(District,id='mrf1').tau21 3.633e-03 2.214e-04 3.565e-03 8.218e-03      0.005
+s(District,id='mrf1').alpha 1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(District,id='mrf1').edf   1.832e+01 3.675e+00 1.986e+01 2.537e+01     22.402
+s(District,id='re2').tau21  4.618e-03 1.066e-04 1.174e-03 2.527e-02      0.024
+s(District,id='re2').alpha  1.000e+00 1.000e+00 1.000e+00 1.000e+00         NA
+s(District,id='re2').edf    7.958e+00 4.446e-01 4.264e+00 2.514e+01     24.433
+---
+Formula lambda34:
+---
+lambda34 ~ 1
+-
+Parametric coefficients:
+                Mean     2.5%      50%    97.5% parameters
+(Intercept) -0.04277 -0.16725 -0.04010  0.03504     -0.009
+-
+Acceptance probability:
+      Mean 2.5% 50% 97.5%
+alpha    1    1   1     1
+---
+Sampler summary:
+-
+DIC = 85820.91 logLik = -42798.93 pd = 223.049
+runtime = 460.77
+---
+Optimizer summary:
+-
+AICc = 86203.92 edf = 405.9967 logLik = -42655.86
+logPost = -2412277 nobs = 4527 runtime = 50.03</code></pre>
+</div>
+</div>
+</section>
+<section id="visualization" class="level1">
+<h1>Visualization</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb88"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(distreg.vis)</span>
+<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) {</span>
+<span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">vis</span>()</span>
+<span id="cb88-5"><a href="#cb88-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="conclusion" class="level1">
+<h1>Conclusion</h1>
+</section>
+<section id="references" class="level1">
+<h1>References</h1>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
