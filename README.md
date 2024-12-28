@@ -12,6 +12,8 @@ In the folder, there two important sets of R scripts. The first set of scripts i
 
 ![Visualization tool](ModelflowchartFinal.png)
 
+The consists of folders for data, shapefiles (shp) and outputs. It consists of the .bat file for launching the analysis and R scripts (Rice_Model.R, Wheat_Model.R and Rice_Wheat_Model.R) that have the respective Bayesian geoadditive model specifications. To lauch the rice model, double click on the runVisualizer.bat. For the wheat and system model, one can edit the .bat by commenting out the rice model and instead de-comment the other preferred model. If one wants to change the variables in the model, they can change the variables included in each of the respective R scripts. 
+
 
 ### Mimicking Bayesian Optimization Experiment in Optimizing Rice-Wheat Cropping System
 The toolkit as it is does not optimize the system, it allows one to conduct scenario analyses including those that are suboptimal. We demonstrate how one can run multiple combinations that give the lower and upper
