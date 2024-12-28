@@ -26,24 +26,28 @@ execute:
 
 We present a rice-wheat systen spatial decisionb support tool which relies on data from the matched landscape crop assessment surveys in eastern India and a multivariate geoadditive Bayesian model to predict entry points for system optimization in the area of interest.
 
-# Crop specific regressions
-
-## Rice
+# Agronomic Functional Relationships: Crop Specific Regressions
 
 ```{r}
+## Rice
 library(sp)
 library(mgcv)
 library(bamlss)
 
 # Multivariate geoadditive model
 # remotes::install_git("https://git.uibk.ac.at/c4031039/mvnchol")
-# library(mvnchol)
+# 
+library(mvnchol)
 library(BayesX)
 library(R2BayesX)
 library(sf)
 library(spdep)
 library(rio)
-Irrig_Rev_rice_wheat <- import("data/Irrig_Rev_rice_wheat.csv")
+
+Irrig_Rev_rice_wheat <- import("data/Irrig_Rev_rice_wheat_Updated.csv")
+
+Irrig_Rev_rice_wheat <- subset (Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Longitude)))
+Irrig_Rev_rice_wheat <- subset (Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Latitude)))
 
 library(janitor)
 # Irrig_Rev_rice_wheat <- clean_names(Irrig_Rev_rice_wheat)
@@ -62,8 +66,48 @@ Irrig_Rev_rice_wheat$harvest_day_rice <- Irrig_Rev_rice_wheat$l_crop_duration_da
 
 # Irrig_Rev_rice_wheat$harvest_day_wheat <- Irrig_Rev_rice_wheat$l_crop_duration_days + Irrig_Rev_rice_wheat$sowdate_fmt_wheat_day
 
+# Visreg example
+
+library(visreg)
+
+rice_yield_sowing_irrig_ols <-lm(b_grain_yield_ton_per_ha_rice~sowdate_fmt_rice_day*g_q5305_irrig_times_rice+nperha_rice + p2o5perha_rice,data=Irrig_Rev_rice_wheat)
+
+visreg2d(rice_yield_sowing_irrig_ols, "sowdate_fmt_rice_day", "g_q5305_irrig_times_rice",ylab="Irrigation",xlab="Sowing date", main="Sowing date and irrigation")
+
+
+
+rice_yield_sowing_N_ols <-lm(b_grain_yield_ton_per_ha_rice~sowdate_fmt_rice_day*nperha_rice+g_q5305_irrig_times_rice+  p2o5perha_rice,data=Irrig_Rev_rice_wheat)
+
+visreg2d(rice_yield_sowing_N_ols, "sowdate_fmt_rice_day", "nperha_rice",ylab="Nitrogen",xlab="Sowing date", main="Sowing date and nitrogen")
+
+
+## Wheat
+
+library(visreg)
+wheat_yield_sowing_irrig_ols <-lm(l_ton_per_hectare~sowdate_fmt_wheat_day*g_q5305_irrig_times+nperha + p2o5perha,data=Irrig_Rev_rice_wheat)
+
+visreg2d(wheat_yield_sowing_irrig_ols, "sowdate_fmt_wheat_day", "g_q5305_irrig_times",ylab="Irrigation",xlab="Sowing date", main="Sowing date and irrigation")
+
+wheat_yield_sowing_nitrog_ols <-lm(l_ton_per_hectare~sowdate_fmt_wheat_day*nperha+g_q5305_irrig_times + p2o5perha,data=Irrig_Rev_rice_wheat)
+
+visreg2d(wheat_yield_sowing_nitrog_ols, "sowdate_fmt_wheat_day", "nperha",ylab="Nitrogen",xlab="Sowing date", main="Sowing date and nitrogen")
+
+
+```
+
+
+## Rice
+
+```{r}
+
+
+
+
+
+
 
 shpname <- file.path(getwd(), "shp", "India_aoi_sf_sp")
+
 India_aoi_sp_bnd <- BayesX::shp2bnd(shpname = shpname, regionnames = "District", check.is.in = F)
 
 f_rice_yield_MRF <- list(
@@ -104,10 +148,6 @@ plot(b_rice_yield_MRF, model = "mu", term = "s(g_q5305_irrig_times_rice)")
 plot(b_rice_yield_MRF, model = "mu", term = "s(nperha_rice)")
 plot(b_rice_yield_MRF, model = "mu", term = "s(p2o5perha_rice)")
 
-
-
-
-
 ```
 
 ## Wheat model
@@ -143,10 +183,63 @@ plotmap(India_aoi_sp_bnd,
     x = p_str_wheat_yield_MRF$mu, id = nd$District,
     main = expression(mu), title = "Structured spatial effect"
 )
+
 plotmap(India_aoi_sp_bnd,
     x = p_str_wheat_yield_MRF$sigma, id = nd$District,
     main = expression(sigma), title = "Structured spatial effect"
 )
+
+# Plotting using bivariate map
+library(sf)
+India_aoi_sf <- st_read("shp/India_aoi_sf_sp.shp")
+
+p_str_wheat_yield_MRF_dt <- as.data.frame(p_str_wheat_yield_MRF)
+
+lv_dist <- as.data.frame(lv)
+lv_dist_str <- cbind(lv_dist, p_str_wheat_yield_MRF_dt)
+
+
+India_aoi_sf_selected_str <- merge(India_aoi_sf, lv_dist_str, by.x = "NAME_2", by.y = "lv")
+
+library(biscale)
+library(ggplot2)
+data <- bi_class(India_aoi_sf_selected_str, x = "mu", y = "sigma", style = "quantile", dim = 3)
+table(data$bi_class)
+
+labels1 <- biscale::bi_class_breaks(
+    data,
+    x = mu,
+    y = sigma,
+    style = "quantile",
+    dim = 3, dig_lab = 0, split = FALSE
+)
+labels1
+
+previous_theme <- theme_set(theme_bw())
+
+# create map
+map <- ggplot() +
+    geom_sf(data = data, mapping = aes(fill = bi_class), color = NA, size = 0.1, show.legend = FALSE) +
+    bi_scale_fill(pal = "GrPink", dim = 3) +
+    labs(title = "Structured spatial effect")
+bi_theme()
+map
+
+legend <- bi_legend(
+    pal = "GrPink",
+    breaks = labels1,
+    xlab = "Higher mu",
+    ylab = "Higher sigma",
+    size = 12
+)
+legend
+# combine map with legend
+library(cowplot)
+finalPlot <- ggdraw() +
+    draw_plot(map, 0, 0, 1, 1) +
+    draw_plot(legend, 0.7, 0.7, 0.2, 0.2)
+
+finalPlot
 
 ## Random effects.
 plotmap(India_aoi_sp_bnd,
@@ -156,7 +249,112 @@ plotmap(India_aoi_sp_bnd,
     x = p_unstr_wheat_yield_MRF$sigma, id = nd$District, title = "Unstructured spatial effect"
 )
 
+# Plotting using bivariate map
+library(sf)
+India_aoi_sf <- st_read("shp/India_aoi_sf_sp.shp")
 
+p_unstr_wheat_yield_MRF_dt <- as.data.frame(p_unstr_wheat_yield_MRF)
+
+lv_dist <- as.data.frame(lv)
+lv_dist_unstr <- cbind(lv_dist, p_unstr_wheat_yield_MRF_dt)
+
+library(dplyr)
+lv_dist_unstr <- rename(lv_dist_unstr, mu_unstr = mu)
+lv_dist_unstr <- rename(lv_dist_unstr, sigma_unstr = sigma)
+
+India_aoi_sf_selected_unstr <- merge(India_aoi_sf, lv_dist_unstr, by.x = "NAME_2", by.y = "lv")
+
+library(biscale)
+library(ggplot2)
+data <- bi_class(India_aoi_sf_selected_unstr, x = "mu_unstr", y = "sigma_unstr", style = "quantile", dim = 3)
+table(data$bi_class)
+
+previous_theme <- theme_set(theme_bw())
+
+# create map
+map <- ggplot() +
+    geom_sf(data = data, mapping = aes(fill = bi_class), color = NA, size = 0.1, show.legend = FALSE) +
+    bi_scale_fill(pal = "GrPink", dim = 3) +
+    labs(title = "Unstructured spatial effect")
+bi_theme()
+map
+
+labels1 <- biscale::bi_class_breaks(
+    data,
+    x = mu_unstr,
+    y = sigma_unstr,
+    style = "quantile",
+    dim = 3, dig_lab = 0, split = FALSE
+)
+labels1
+
+legend <- bi_legend(
+    pal = "GrPink",
+    breaks = labels1,
+    dim = 3,
+    xlab = "Higher mu",
+    ylab = "Higher sigma",
+    size = 10
+)
+
+# combine map with legend
+library(cowplot)
+finalPlot <- ggdraw() +
+    draw_plot(map, 0, 0, 1, 1) +
+    draw_plot(legend, 0.7, 0.7, 0.2, 0.2)
+
+finalPlot
+
+#
+
+# Structured vs unstructured
+
+India_aoi_sf_selected_str_dt <- subset(India_aoi_sf_selected_str, select = c("NAME_2", "mu", "sigma"))
+
+India_aoi_sf_selected_str_dt$geometry <- NULL
+
+India_aoi_sf_selected_unstr_str <- merge(India_aoi_sf_selected_unstr, India_aoi_sf_selected_str_dt, by = "NAME_2")
+
+library(biscale)
+library(ggplot2)
+data <- bi_class(India_aoi_sf_selected_unstr_str, x = "mu", y = "mu_unstr", style = "quantile", dim = 3)
+table(data$bi_class)
+
+previous_theme <- theme_set(theme_bw())
+
+# create map
+map <- ggplot() +
+    geom_sf(data = data, mapping = aes(fill = bi_class), color = NA, size = 0.1, show.legend = FALSE) +
+    bi_scale_fill(pal = "GrPink", dim = 3) +
+    labs(title = "Structured and unstructured spatial effect")
+bi_theme()
+map
+
+labels1 <- biscale::bi_class_breaks(
+    data,
+    x = mu,
+    y = mu_unstr,
+    style = "quantile",
+    dim = 3, dig_lab = 0, split = FALSE
+)
+labels1
+
+legend <- bi_legend(
+    pal = "GrPink",
+    breaks = labels1,
+    dim = 3,
+    xlab = "Higher mu str",
+    ylab = "Higher mu unstr",
+    size = 12
+)
+
+# combine map with legend
+library(cowplot)
+finalPlot <- ggdraw() +
+    draw_plot(map, 0, 0, 1, 1) +
+    draw_plot(legend, 0.7, 0.7, 0.2, 0.2)
+
+finalPlot
 
 ```
 
@@ -278,10 +476,6 @@ plotmap(India_aoi_sp_bnd,
 )
 
 
-
-
-
-
 # Rice sowing equation : Non-linear relationships
 # s(gw_2017) + s(onset_2017) + s(monsoon_onset_dev) + s(median_onset_82_15) + s(sd_onset_82_15)
 plot(multivariate_geo_sow_MRF_corr_endo, model = "mu1", term = "s(gw_2017)")
@@ -398,24 +592,197 @@ plot(multivariate_geo_sow_MRF_corr_endo_General, model = "lambda24", term = "s(R
 
 plot(multivariate_geo_sow_MRF_corr_endo_General, model = "lambda24", term = "s(Res_wheat_sow)")
 
-save.image("RW_System_SDS.RData")
+#save.image("RW_System_SDS.RData")
+```
+
+# Including Soils and other variables \[For Bihar Only\]
+
+```{r}
+library(sp)
+library(mgcv)
+library(bamlss)
+
+# Multivariate geoadditive model
+# remotes::install_git("https://git.uibk.ac.at/c4031039/mvnchol")
+# library(mvnchol)
+library(BayesX)
+library(R2BayesX)
+library(sf)
+library(spdep)
+library(rio)
+
+Irrig_Rev_rice_wheat <- import("Irrig_Rev_rice_wheat_Updated.csv")
+
+
+Irrig_Rev_rice_wheat$harvest_day_rice <- Irrig_Rev_rice_wheat$l_crop_duration_days_rice + Irrig_Rev_rice_wheat$sowdate_fmt_rice_day
+
+# Irrig_Rev_rice_wheat$harvest_day_wheat <- Irrig_Rev_rice_wheat$l_crop_duration_days + Irrig_Rev_rice_wheat$sowdate_fmt_wheat_day
+
+# Remove NAs in the monsoon variables
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$onset_2017)))
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$monsoon_onset_dev)))
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$median_onset_82_15)))
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$sd_onset_82_15)))
+
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$May_tmax_17)))
+
+shpname <- file.path(getwd(), "shp", "India_aoi_sf_sp")
+India_aoi_sp_bnd <- BayesX::shp2bnd(shpname = shpname, regionnames = "District", check.is.in = F)
+
+K <- neighbormatrix(India_aoi_sp_bnd)
+head(K)
+
+## Also need to transform to factor for
+## setting up the MRF smooth.
+Irrig_Rev_rice_wheat$District <- as.factor(Irrig_Rev_rice_wheat$a_q103_district)
+
+## Now note that not all regions are observed,
+## therefore we need to remove those regions
+## from the penalty matrix
+rn <- rownames(K)
+lv <- levels(Irrig_Rev_rice_wheat$District)
+i <- rn %in% lv
+K <- K[i, i]
+
+# First stage analytics
+library(sp)
+library(mgcv)
+library(bamlss)
+
+# Multivariate geoadditive model
+# remotes::install_git("https://git.uibk.ac.at/c4031039/mvnchol")
+# install_github("https://github.com/meteosimon/mvnchol")
+library(mvnchol)
+
+
+# Rice first stage
+f_sow_rice_1st_stage <- list(
+    sowdate_fmt_rice_day ~ 1 + rice_duration_class_long + s(gw_2017) + s(May_tmax_17) + s(onset_2017) + s(monsoon_onset_dev) + s(median_onset_82_15) + s(sd_onset_82_15) + s(District, bs = "mrf", xt = list("penalty" = K)) +
+        s(District, bs = "re")
+)
+
+f_sow_rice_1st_stage_MRF <- bamlss(f_sow_rice_1st_stage, data = Irrig_Rev_rice_wheat, family = "gaussian")
+
+fitted_f_sow_rice_1st_stage_MRF <- f_sow_rice_1st_stage_MRF$fitted
+
+Irrig_Rev_rice_wheat$Res_rice_sow <- Irrig_Rev_rice_wheat$sowdate_fmt_rice_day - fitted_f_sow_rice_1st_stage_MRF$mu
+
+# Wheat first stage
+f_sow_wheat_1st_stage <- list(
+    sowdate_fmt_wheat_day ~ 1 + variety_type_NMWV + s(harvest_day_rice) + s(gw_2017) + s(District, bs = "mrf", xt = list("penalty" = K)) +
+        s(District, bs = "re")
+)
+
+f_sow_wheat_1st_stage_MRF <- bamlss(f_sow_wheat_1st_stage, data = Irrig_Rev_rice_wheat, family = "gaussian")
+
+fitted_f_sow_wheat_1st_stage_MRF <- f_sow_wheat_1st_stage_MRF$fitted
+
+Irrig_Rev_rice_wheat$Res_wheat_sow <- Irrig_Rev_rice_wheat$sowdate_fmt_wheat_day - fitted_f_sow_wheat_1st_stage_MRF$mu
+
+
+# Second stage analytics
+f_rice_wheat_yield_MRF_corr_endo_General <- list(
+    sowdate_fmt_rice_day ~ 1 + rice_duration_class_long + s(gw_2017) + s(onset_2017) + s(monsoon_onset_dev) + s(median_onset_82_15) + s(sd_onset_82_15) + s(District, bs = "mrf", xt = list("penalty" = K)) +
+        s(District, bs = "re"),
+    b_grain_yield_ton_per_ha_rice ~ 1 + rice_duration_class_long + s(Res_rice_sow) + s(g_q5305_irrig_times_rice) + s(nperha_rice) + s(p2o5perha_rice) + s(District, bs = "mrf", xt = list("penalty" = K)) +
+        s(District, bs = "re"),
+    sowdate_fmt_wheat_day ~ 1 + variety_type_NMWV + s(harvest_day_rice) + s(District, bs = "mrf", xt = list("penalty" = K)) +
+        s(District, bs = "re"),
+    l_ton_per_hectare ~ 1 + variety_type_NMWV + s(Res_wheat_sow) + g_q5305_irrig_times + nperha + p2o5perha + s(District, bs = "mrf", xt = list("penalty" = K)) + s(District, bs = "re"),
+    lamdiag1 ~ 1,
+    lamdiag2 ~ 1,
+    lamdiag3 ~ 1,
+    lamdiag4 ~ 1,
+    lambda12 ~ 1,
+    lambda13 ~ 1,
+    lambda14 ~ 1,
+    lambda23 ~ 1,
+    lambda24 ~ s(Res_rice_sow) + s(Res_wheat_sow) + rice_duration_class_long + s(gw_2017) + s(onset_2017) + variety_type_NMWV + s(District, bs = "mrf", xt = list("penalty" = K)) + s(District, bs = "re"),
+    lambda34 ~ 1
+)
+
+multivariate_geo_sow_MRF_corr_endo_General <- bamlss(f_rice_wheat_yield_MRF_corr_endo_General, type = "modified", family = mvnchol_bamlss(k = 4), data = Irrig_Rev_rice_wheat)
+
+summary(multivariate_geo_sow_MRF_corr_endo_General)
+
+plot(multivariate_geo_sow_MRF_corr_endo_General, model = "lambda24", term = "s(gw_2017)")
+
+plot(multivariate_geo_sow_MRF_corr_endo_General, model = "lambda24", term = "s(onset_2017)")
+
+plot(multivariate_geo_sow_MRF_corr_endo_General, model = "lambda24", term = "s(Res_rice_sow)")
+
+plot(multivariate_geo_sow_MRF_corr_endo_General, model = "lambda24", term = "s(Res_wheat_sow)")
+
+
+
+
+```
+
+# Economics structural system analysis
+
+```{r}
+f_rice_wheat_rev_MRF_corr_endo_General <- list(
+    sowdate_fmt_rice_day ~ 1 + rice_duration_class_long + s(gw_2017) + s(onset_2017) + s(monsoon_onset_dev) + s(median_onset_82_15) + s(sd_onset_82_15) + s(District, bs = "mrf", xt = list("penalty" = K)) +
+        s(District, bs = "re"),
+    revenue_rice ~ 1 + rice_duration_class_long + s(Res_rice_sow) + s(g_q5305_irrig_times_rice) + s(nperha_rice) + s(p2o5perha_rice) + s(District, bs = "mrf", xt = list("penalty" = K)) +
+        s(District, bs = "re"),
+    sowdate_fmt_wheat_day ~ 1 + variety_type_NMWV + s(harvest_day_rice) + s(District, bs = "mrf", xt = list("penalty" = K)) +
+        s(District, bs = "re"),
+    revenue_wheat ~ 1 + variety_type_NMWV + s(Res_wheat_sow) + g_q5305_irrig_times + nperha + p2o5perha + s(District, bs = "mrf", xt = list("penalty" = K)) + s(District, bs = "re"),
+    lamdiag1 ~ 1,
+    lamdiag2 ~ 1,
+    lamdiag3 ~ 1,
+    lamdiag4 ~ 1,
+    lambda12 ~ 1,
+    lambda13 ~ 1,
+    lambda14 ~ 1,
+    lambda23 ~ 1,
+    lambda24 ~ s(Res_rice_sow)+s(Res_wheat_sow)+rice_duration_class_long + s(gw_2017) + s(onset_2017)+variety_type_NMWV+s(District, bs = "mrf", xt = list("penalty" = K)) + s(District, bs = "re"),
+    lambda34 ~ 1
+)
+
+rev_multivariate_geo_sow_MRF_corr_endo_General <- bamlss(f_rice_wheat_rev_MRF_corr_endo_General, type = "modified", family = mvnchol_bamlss(k = 4), data = Irrig_Rev_rice_wheat)
+
+summary(rev_multivariate_geo_sow_MRF_corr_endo_General)
+
+plot(rev_multivariate_geo_sow_MRF_corr_endo_General, model = "lambda24", term = "s(gw_2017)")
+
+plot(rev_multivariate_geo_sow_MRF_corr_endo_General, model = "lambda24", term = "s(onset_2017)")
+
+plot(rev_multivariate_geo_sow_MRF_corr_endo_General, model = "lambda24", term = "s(Res_rice_sow)")
+
+plot(rev_multivariate_geo_sow_MRF_corr_endo_General, model = "lambda24", term = "s(Res_wheat_sow)")
+
+
+
+
+
+
+
+
+
+
+
 ```
 
 # Visualization
 
 ```{r}
-##| context: server
-#library(distreg.vis)
+## | context: server
+# library(distreg.vis)
 
 
-#if (interactive()) {
+# if (interactive()) {
 #   distreg.vis:: vis()
-#}
+# }
 
-library(shinylive)
-shinylive::export(appdir = "C:/Users/MMKONDIWA/OneDrive - CIMMYT/Documents/GitHub/Rice_Wheat_System_SDS_Tool/RW_System_Visualizer", destdir = "C:/Users/MMKONDIWA/OneDrive - CIMMYT/Documents/GitHub/Rice_Wheat_System_SDS_Tool/RW_System_Visualizer/docs")
+# library(shinylive)
+# shinylive::export(appdir = "C:/Users/MMKONDIWA/OneDrive - CIMMYT/Documents/GitHub/Rice_Wheat_System_SDS_Tool/RW_System_Visualizer", destdir = "C:/Users/MMKONDIWA/OneDrive - CIMMYT/Documents/GitHub/Rice_Wheat_System_SDS_Tool/RW_System_Visualizer/docs")
+#
+# usethis::use_github_action(url="https://github.com/posit-dev/r-shinylive/blob/actions-v1/examples/deploy-app.yaml")
 
-usethis::use_github_action(url="https://github.com/posit-dev/r-shinylive/blob/actions-v1/examples/deploy-app.yaml")
+
+#rsconnect::deployApp("C:/Users/MMKONDIWA/OneDrive - CIMMYT/Documents/GitHub/Rice_Wheat_System_SDS_Tool/RW_System_Visualizer")
 
 ```
 

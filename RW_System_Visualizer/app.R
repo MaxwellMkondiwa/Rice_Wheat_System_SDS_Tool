@@ -8,7 +8,6 @@
 #
 library(shiny)
 
-library(flexdashboard)
 library(distreg.vis)
 library(bamlss)
 
