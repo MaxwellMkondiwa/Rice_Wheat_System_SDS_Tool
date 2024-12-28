@@ -8,8 +8,9 @@ To use the tool, you need to have R studio (or Visual Studio Code). You can down
 
 In the folder, there two important sets of R scripts. The first set of scripts implement the different geo-additive models. The second set of scripts source the main code and activates the tool.
 
-## The visual tool
+## The visualization tool
 
+![Visualization tool](ModelflowchartFinal.png)
 
 
 ### Mimicking Bayesian Optimization Experiment in Optimizing Rice-Wheat Cropping System
