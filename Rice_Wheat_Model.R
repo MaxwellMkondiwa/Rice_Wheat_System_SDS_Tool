@@ -1,7 +1,36 @@
-library(sp)
-library(mgcv)
-library(bamlss)
 
+
+#rm(list = ls())
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(sp, mgcv, bamlss,BayesX,R2BayesX,sf,spdep,rio,distreg.vis)
+
+setwd("C:/Users/MMKONDIWA/OneDrive - CIMMYT/Documents/GitHub/Rice_Wheat_System_SDS_Tool")
+# Multivariate geoadditive model
+# remotes::install_git("https://git.uibk.ac.at/c4031039/mvnchol")
+#
+library(sp)
+library (mgcv)
+library(mvnchol)
+library(BayesX)
+library(R2BayesX)
+library(sf)
+library(spdep)
+library(rio)
+
+Irrig_Rev_rice_wheat <- import("data/Irrig_Rev_rice_wheat_Updated.csv")
+
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Longitude)))
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Latitude)))
+
+library(janitor)
+library(tidyr)
+
+
+Irrig_Rev_rice_wheat$harvest_day_rice <- Irrig_Rev_rice_wheat$l_crop_duration_days_rice + Irrig_Rev_rice_wheat$sowdate_fmt_rice_day
+
+shpname <- file.path(getwd(), "shp", "India_aoi_sf_sp")
+
+India_aoi_sp_bnd <- BayesX::shp2bnd(shpname = shpname, regionnames = "District", check.is.in = F)
 # Multivariate geoadditive model
 # remotes::install_git("https://git.uibk.ac.at/c4031039/mvnchol")
 # install_github("https://github.com/meteosimon/mvnchol")
@@ -12,6 +41,26 @@ Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_whea
 Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$monsoon_onset_dev)))
 Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$median_onset_82_15)))
 Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$sd_onset_82_15)))
+
+
+K <- neighbormatrix(India_aoi_sp_bnd)
+head(K)
+
+## Also need to transform to factor for
+## setting up the MRF smooth.
+Irrig_Rev_rice_wheat$District <- as.factor(Irrig_Rev_rice_wheat$a_q103_district)
+
+## Now note that not all regions are observed,
+## therefore we need to remove those regions
+## from the penalty matrix
+rn <- rownames(K)
+lv <- levels(Irrig_Rev_rice_wheat$District)
+i <- rn %in% lv
+K <- K[i, i]
+
+set.seed(321)
+library(bamlss)
+
 
 # Rice first stage
 f_sow_rice_1st_stage <- list(
@@ -61,130 +110,10 @@ f_rice_wheat_yield_MRF_corr_endo <- list(
 
 multivariate_geo_sow_MRF_corr_endo <- bamlss(f_rice_wheat_yield_MRF_corr_endo, type = "modified", family = mvnchol_bamlss(k = 4), data = Irrig_Rev_rice_wheat)
 
-summary(multivariate_geo_sow_MRF_corr_endo)
+library(distreg.vis)
+library(bamlss)
 
-nd <- data.frame("District" = unique(Irrig_Rev_rice_wheat$District))
-
-# Focusing on the cross-equation correlations
-
-## Predict for the structured spatial effects.
-p_str_multivariate_geo_sow_MRF_corr_endo_rice_y <- predict(multivariate_geo_sow_MRF_corr_endo, newdata = nd, term = "s(District,id='mrf1')", intercept = FALSE)
-
-p_str_multivariate_geo_sow_MRF_corr_endo_rice_ydt <- as.data.frame(p_str_multivariate_geo_sow_MRF_corr_endo_rice_y)
-
-
-## And the unstructured spatial effect.
-p_unstr_multivariate_geo_sow_MRF_corr_endo_rice_y <- predict(multivariate_geo_sow_MRF_corr_endo, newdata = nd, term = "s(District,id='re2')", intercept = FALSE)
-
-# Rice sowing spatial equation
-
-plotmap(India_aoi_sp_bnd, x = p_str_multivariate_geo_sow_MRF_corr_endo_rice_y$mu1, id = nd$District, main = expression(mu(rice_sowing)), title = "Structured spatial effect")
-
-plotmap(India_aoi_sp_bnd, x = p_unstr_multivariate_geo_sow_MRF_corr_endo_rice_y$mu1, id = nd$District, main = expression(mu(rice_sowing)), title = "Unstructured spatial effect")
-
-# Rice yield spatial equation
-plotmap(India_aoi_sp_bnd, x = p_str_multivariate_geo_sow_MRF_corr_endo_rice_y$mu2, id = nd$District, main = expression(mu(rice_yield)), title = "Structured spatial effect")
-
-plotmap(India_aoi_sp_bnd, x = p_unstr_multivariate_geo_sow_MRF_corr_endo_rice_y$mu2, id = nd$District, main = expression(mu(rice_yield)), title = "Unstructured spatial effect")
-
-# Wheat sowing equation
-plotmap(India_aoi_sp_bnd, x = p_str_multivariate_geo_sow_MRF_corr_endo_rice_y$mu3, id = nd$District, main = expression(mu(wheat_sowing)), title = "Structured spatial effect")
-
-plotmap(India_aoi_sp_bnd, x = p_unstr_multivariate_geo_sow_MRF_corr_endo_rice_y$mu3, id = nd$District, main = expression(mu(wheat_sowing)), title = "Unstructured spatial effect")
-
-# Wheat yield spatial equation
-plotmap(India_aoi_sp_bnd, x = p_str_multivariate_geo_sow_MRF_corr_endo_rice_y$mu4, id = nd$District, main = expression(mu(wheat_yield)), title = "Structured spatial effect")
-
-plotmap(India_aoi_sp_bnd, x = p_unstr_multivariate_geo_sow_MRF_corr_endo_rice_y$mu4, id = nd$District, main = expression(mu(wheat_yield)), title = "Unstructured spatial effect")
-
-# Focusing on the cross-equation correlations
-
-## MRF smooth effect.
-plotmap(India_aoi_sp_bnd,
-        x = p_str_multivariate_geo_sow_MRF_corr_endo_rice_y$lambda24, id = nd$District,
-        main = expression(lambda(rice, wheat)), title = "Structured spatial effect"
-)
-
-## Random effects.
-plotmap(India_aoi_sp_bnd,
-        x = p_unstr_multivariate_geo_sow_MRF_corr_endo_rice_y$lambda24, id = nd$District, main = expression(lambda(rice, wheat)), title = "Unstructured spatial effect"
-)
-
-
-# Rice sowing equation : Non-linear relationships
-# s(gw_2017) + s(onset_2017) + s(monsoon_onset_dev) + s(median_onset_82_15) + s(sd_onset_82_15)
-plot(multivariate_geo_sow_MRF_corr_endo, model = "mu1", term = "s(gw_2017)")
-plot(multivariate_geo_sow_MRF_corr_endo, model = "mu1", term = "s(onset_2017)")
-plot(multivariate_geo_sow_MRF_corr_endo, model = "mu1", term = "s(monsoon_onset_dev)")
-plot(multivariate_geo_sow_MRF_corr_endo, model = "mu1", term = "s(median_onset_82_15)")
-plot(multivariate_geo_sow_MRF_corr_endo, model = "mu1", term = "s(sd_onset_82_15)")
-
-
-# Rice yield equation
-# s(Res_rice_sow) + s(g_q5305_irrig_times_rice) + s(nperha_rice) + s(p2o5perha_rice)
-
-plot(multivariate_geo_sow_MRF_corr_endo, model = "mu2", term = "s(Res_rice_sow)")
-
-plot(multivariate_geo_sow_MRF_corr_endo, model = "mu2", term = "s(g_q5305_irrig_times_rice)")
-
-plot(multivariate_geo_sow_MRF_corr_endo, model = "mu2", term = "s(nperha_rice)")
-
-plot(multivariate_geo_sow_MRF_corr_endo, model = "mu2", term = "s(p2o5perha_rice)")
-
-# Wheat sowing equation
-# s(harvest_day_rice) + s(gw_2018)
-plot(multivariate_geo_sow_MRF_corr_endo, model = "mu3", term = "s(harvest_day_rice)")
-
-# (multivariate_geo_sow_MRF_corr_endo, model = "mu3", term = "s(gw_2018)")
-
-# Wheat yield equation
-plot(multivariate_geo_sow_MRF_corr_endo, model = "mu4", term = "s(Res_wheat_sow)")
-
-
-# Fitted values
-multivariate_geo_sow_MRF_corr_endo_fitted_values <- multivariate_geo_sow_MRF_corr_endo$fitted
-
-multivariate_geo_sow_MRF_corr_endo_fitted_values <- as.data.frame(multivariate_geo_sow_MRF_corr_endo_fitted_values)
-
-# Merge the fitted results to the data and export
-
-
-
-Irrig_Rev_rice_wheat_Mult_Res <- cbind(Irrig_Rev_rice_wheat, multivariate_geo_sow_MRF_corr_endo_fitted_values)
-
-
-summary(lm(sowdate_fmt_rice_day ~ mu1, Irrig_Rev_rice_wheat_Mult_Res))
-
-summary(lm(b_grain_yield_ton_per_ha_rice ~ l_ton_per_hectare, Irrig_Rev_rice_wheat_Mult_Res))
-
-
-
-plot((lm(sowdate_fmt_rice_day ~ mu1, Irrig_Rev_rice_wheat_Mult_Res)))
-
-Irrig_Rev_rice_wheat_Mult_Res_sp <- Irrig_Rev_rice_wheat_Mult_Res
-coordinates(Irrig_Rev_rice_wheat_Mult_Res_sp) <- c("o_largest_plot_gps_longitude", "o_largest_plot_gps_latitude")
-
-# Map the correlations
-# library(modelsummary)
-# Irrig_Rev_rice_wheat_Mult_Res_dist <- datasummary(Heading("District") * District ~ Heading("N obs") * N + Heading("%") * Percent() + lambda24 * (Mean + SD), data = Irrig_Rev_rice_wheat_Mult_Res, output = "data.frame")
-
-# library(dplyr)
-# Irrig_Rev_rice_wheat_Mult_Res_dist <- rename(Irrig_Rev_rice_wheat_Mult_Res_dist, "Mean_Rice_Wheat_Rho" = "Mean")
-# Irrig_Rev_rice_wheat_Mult_Res_dist <- rename(Irrig_Rev_rice_wheat_Mult_Res_dist, "SD_Rice_Wheat_Rho" = "SD")
-
-# Irrig_Rev_rice_wheat_Mult_Res_dist <- subset(Irrig_Rev_rice_wheat_Mult_Res_dist, Irrig_Rev_rice_wheat_Mult_Res_dist$District != "Purnia")
-
-# rice_wheat_yield_rho_dist_sf <- merge(India_aoi_sf, Irrig_Rev_rice_wheat_Mult_Res_dist, by = "District")
-
-# rice_wheat_yield_rho_dist_sf$Mean_Rice_Wheat_Rho <- as.numeric(rice_wheat_yield_rho_dist_sf$Mean_Rice_Wheat_Rho)
-# library(mapview)
-# mapview(rice_wheat_yield_rho_dist_sf, zcol = "Mean_Rice_Wheat_Rho", layer.name = "Rice wheat equation correlation")
-# library(sf)
-# rice_wheat_yield_rho_dist_sf_sp <- as_Spatial(rice_wheat_yield_rho_dist_sf)
-# library(tmap)
-# tmap_mode("view")
-# rice_wheat_yield_rho_dist_sf_sp_map <- tm_shape(rice_wheat_yield_rho_dist_sf_sp) +
-#     tm_polygons(col = "Mean_Rice_Wheat_Rho", title = "Rice wheat equation correlation", style = "quantile") +
-#     tm_layout(legend.outside = TRUE)
-
-# tmap_save(rice_wheat_yield_rho_dist_sf_sp_map, "figures/rice_wheat_yield_rho_dist_sf_sp_map .png")
+library(mvnchol)
+if (interactive()) {
+  distreg.vis:: vis()
+}

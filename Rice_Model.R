@@ -1,9 +1,9 @@
 # Rice Model
+#rm(list = ls())
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(sp, mgcv, bamlss,BayesX,R2BayesX,sf,spdep,rio,distreg.vis)
 
-library(sp)
-library(mgcv)
-library(bamlss)
-
+setwd("C:/Users/MMKONDIWA/OneDrive - CIMMYT/Documents/GitHub/Rice_Wheat_System_SDS_Tool")
 # Multivariate geoadditive model
 # remotes::install_git("https://git.uibk.ac.at/c4031039/mvnchol")
 #
@@ -56,7 +56,7 @@ library(bamlss)
 b_rice_yield_MRF <- bamlss(f_rice_yield_MRF, data = Irrig_Rev_rice_wheat, family = "gaussian")
 
 library(distreg.vis)
-
+library(bamlss)
 
 if (interactive()) {
    distreg.vis:: vis()
