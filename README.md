@@ -50,6 +50,8 @@ Iterate by adjusting the optimal amounts in the direction of optimality while ho
 
 ## References 
 
+For similar, see Agent Based Model by Harrison Smith, Meha Jain, Maanya Umashaanker, and Sukhwinder Singh (https://www.learngala.com/cases/growing-into-an-uncertain-future/)
+
 
 
 
