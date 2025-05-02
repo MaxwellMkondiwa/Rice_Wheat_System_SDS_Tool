@@ -16,12 +16,18 @@ library(rio)
 
 Irrig_Rev_rice_wheat <- import("data/Irrig_Rev_rice_wheat_Updated.csv")
 
+Irrig_Rev_rice_wheat$Longitude=Irrig_Rev_rice_wheat$o_largest_plot_gps_longitude
+Irrig_Rev_rice_wheat$Latitude=Irrig_Rev_rice_wheat$o_largest_plot_gps_latitude
+
 Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Longitude)))
 Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Latitude)))
 
 library(janitor)
 library(tidyr)
 
+Irrig_Rev_rice_wheat <- clean_names(Irrig_Rev_rice_wheat)
+
+Irrig_Rev_rice_wheat$c_q306_crop_larest_area_ha <- Irrig_Rev_rice_wheat$c_q306_crop_larest_area_acre*0.405
 
 Irrig_Rev_rice_wheat$harvest_day_rice <- Irrig_Rev_rice_wheat$l_crop_duration_days_rice + Irrig_Rev_rice_wheat$sowdate_fmt_rice_day
 
@@ -30,9 +36,17 @@ shpname <- file.path(getwd(), "shp", "India_aoi_sf_sp")
 India_aoi_sp_bnd <- BayesX::shp2bnd(shpname = shpname, regionnames = "District", check.is.in = F)
 
 f_rice_yield_MRF <- list(
-  b_grain_yield_ton_per_ha_rice ~ 1 + rice_duration_class_long + s(sowdate_fmt_rice_day) + s(g_q5305_irrig_times_rice) + s(nperha_rice) + s(p2o5perha_rice) + s(District, bs = "mrf", xt = list("penalty" = K)) +
+  b_grain_yield_ton_per_ha_rice ~ 1 + rice_duration_class_long + s(sowdate_fmt_rice_day) + s(g_q5305_irrig_times_rice) + s(nperha_rice) + s(p2o5perha_rice) +
+    s(c_q306_crop_larest_area_ha)+d_q401_soil_texture+d_q402_drain_class+s(m_q701_hh_member)+s(m_q708_market_distance)+irrig_source+a_q112_f_edu_new+
+    population_density+wc2_1_30s_elev+sand_0_5cm+nitrogen_0_5cm+soc_5_15cm+may_tmin_17+jun_tmin_17+jul_tmin_17+aug_tmin_17+sep_tmin_17+oct_tmin_17+
+    may_tmax_17+jun_tmax_17+jul_tmax_17+aug_tmax_17+sep_tmax_17+oct_tmax_17+may_prec_17+jun_prec_17+jul_prec_17+aug_prec_17+sep_prec_17+oct_prec_17+
+    s(District, bs = "mrf", xt = list("penalty" = K)) +
     s(District, bs = "re"),
-  sigma ~ 1 + rice_duration_class_long + s(sowdate_fmt_rice_day) + s(g_q5305_irrig_times_rice) + s(nperha_rice) + s(p2o5perha_rice) + s(District, bs = "mrf", xt = list("penalty" = K)) +
+  sigma ~ 1 + rice_duration_class_long + s(sowdate_fmt_rice_day) + s(g_q5305_irrig_times_rice) + s(nperha_rice) + s(p2o5perha_rice) +
+    s(c_q306_crop_larest_area_ha)+d_q401_soil_texture+d_q402_drain_class+s(m_q701_hh_member)+s(m_q708_market_distance)+irrig_source+a_q112_f_edu_new+
+    population_density+wc2_1_30s_elev+sand_0_5cm+nitrogen_0_5cm+soc_5_15cm+may_tmin_17+jun_tmin_17+jul_tmin_17+aug_tmin_17+sep_tmin_17+oct_tmin_17+
+    may_tmax_17+jun_tmax_17+jul_tmax_17+aug_tmax_17+sep_tmax_17+oct_tmax_17+may_prec_17+jun_prec_17+jul_prec_17+aug_prec_17+sep_prec_17+oct_prec_17+
+    s(District, bs = "mrf", xt = list("penalty" = K)) +
     s(District, bs = "re")
 )
 
@@ -54,6 +68,43 @@ K <- K[i, i]
 set.seed(321)
 library(bamlss)
 b_rice_yield_MRF <- bamlss(f_rice_yield_MRF, data = Irrig_Rev_rice_wheat, family = "gaussian")
+
+summary(b_rice_yield_MRF)
+
+
+par(mfrow = c(2, 3), mar = c(4, 4, 1, 1))
+plot(b_rice_yield_MRF, pages = 1, spar = FALSE, rug = TRUE)
+
+
+# Revenue Model
+f_rice_rev_MRF <- list(
+  revenue_rice ~ 1 + rice_duration_class_long + s(sowdate_fmt_rice_day) + s(g_q5305_irrig_times_rice) + s(nperha_rice) + s(p2o5perha_rice) +
+    s(c_q306_crop_larest_area_ha)+d_q401_soil_texture+d_q402_drain_class+s(m_q701_hh_member)+s(m_q708_market_distance)+irrig_source+a_q112_f_edu_new+
+    population_density+wc2_1_30s_elev+sand_0_5cm+nitrogen_0_5cm+soc_5_15cm+may_tmin_17+jun_tmin_17+jul_tmin_17+aug_tmin_17+sep_tmin_17+oct_tmin_17+
+    may_tmax_17+jun_tmax_17+jul_tmax_17+aug_tmax_17+sep_tmax_17+oct_tmax_17+may_prec_17+jun_prec_17+jul_prec_17+aug_prec_17+sep_prec_17+oct_prec_17+
+    s(District, bs = "mrf", xt = list("penalty" = K)) +
+    s(District, bs = "re"),
+  sigma ~ 1 + rice_duration_class_long + s(sowdate_fmt_rice_day) + s(g_q5305_irrig_times_rice) + s(nperha_rice) + s(p2o5perha_rice) +
+    s(c_q306_crop_larest_area_ha)+d_q401_soil_texture+d_q402_drain_class+s(m_q701_hh_member)+s(m_q708_market_distance)+irrig_source+a_q112_f_edu_new+
+    population_density+wc2_1_30s_elev+sand_0_5cm+nitrogen_0_5cm+soc_5_15cm+may_tmin_17+jun_tmin_17+jul_tmin_17+aug_tmin_17+sep_tmin_17+oct_tmin_17+
+    may_tmax_17+jun_tmax_17+jul_tmax_17+aug_tmax_17+sep_tmax_17+oct_tmax_17+may_prec_17+jun_prec_17+jul_prec_17+aug_prec_17+sep_prec_17+oct_prec_17+
+    s(District, bs = "mrf", xt = list("penalty" = K)) +
+    s(District, bs = "re")
+)
+
+set.seed(321)
+library(bamlss)
+b_rice_rev_MRF <- bamlss(f_rice_rev_MRF, data = Irrig_Rev_rice_wheat, family = "gaussian")
+
+summary(b_rice_rev_MRF)
+
+
+par(mfrow = c(2, 3), mar = c(4, 4, 1, 1))
+plot(b_rice_rev_MRF, pages = 1, spar = FALSE, rug = TRUE)
+
+
+# Visualization
+
 
 library(distreg.vis)
 library(bamlss)

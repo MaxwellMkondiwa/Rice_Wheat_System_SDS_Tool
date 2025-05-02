@@ -145,3 +145,150 @@ library(OptimaRegion)
 
 
 ```
+
+# Bayesian optimization model
+
+## Rice Bayesian optimization model
+
+```{r}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(sp, mgcv, bamlss,BayesX,R2BayesX,sf,spdep,rio,distreg.vis)
+
+# Multivariate geoadditive model
+# remotes::install_git("https://git.uibk.ac.at/c4031039/mvnchol")
+#
+library(mvnchol)
+library(BayesX)
+library(R2BayesX)
+library(sf)
+library(spdep)
+library(rio)
+
+Irrig_Rev_rice_wheat <- import("data/Irrig_Rev_rice_wheat_Updated.csv")
+
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Longitude)))
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Latitude)))
+
+library(janitor)
+library(tidyr)
+
+
+Irrig_Rev_rice_wheat$harvest_day_rice <- Irrig_Rev_rice_wheat$l_crop_duration_days_rice + Irrig_Rev_rice_wheat$sowdate_fmt_rice_day
+
+# Bayesian optimization procedure
+library(mlrMBO)
+library(mlr3)
+library(ggplot2)
+library(smoof)
+
+## Run a  model
+rice_sow_model <- lm(b_grain_yield_ton_per_ha_rice ~ sowdate_fmt_rice_day, data = Irrig_Rev_rice_wheat)
+summary(rice_sow_model)
+
+rice.sow.obj.fun <- makeSingleObjectiveFunction(
+    name = "rice_sow_date_lm",
+    fn = function(x) {
+        3.967 + 0.00022 * x
+    },
+    par.set = makeParamSet(
+        makeNumericVectorParam("x", len = 1L, lower = 147, upper = 242)
+    ),
+    minimize = FALSE
+)
+
+# Surrogate Model
+
+surr.km <- makeLearner("regr.km", predict.type = "se", covtype = "matern3_2", control = list(trace = FALSE))
+
+# MBOControl
+
+control <- makeMBOControl()
+control <- setMBOControlTermination(control, iters = 10)
+control <- setMBOControlInfill(control, crit = makeMBOInfillCritEI())
+
+# Start the optimization
+
+rice_sow_run <- mbo(rice.sow.obj.fun, learner = surr.km, control = control, show.info = TRUE)
+
+print(rice_sow_run)
+
+# Visualization
+rice_sow_run <- exampleRun(rice.sow.obj.fun, learner = surr.km, control = control, show.info = FALSE)
+
+print(rice_sow_run)
+
+previous_theme <- theme_set(theme_bw())
+plotExampleRun(rice_sow_run, iters = c(1L, 2L, 10L), pause = FALSE)
+
+
+
+
+
+
+```
+
+## Wheat Bayesian optimization model
+
+```{r}
+
+# Bayesian optimization procedure
+library(mlrMBO)
+library(mlr3)
+library(ggplot2)
+library(smoof)
+
+## Run a  model
+wheat_sow_model <- lm(l_ton_per_hectare ~ sowdate_fmt_wheat_day, data = Irrig_Rev_rice_wheat)
+summary(wheat_sow_model)
+
+wheat.sow.obj.fun <- makeSingleObjectiveFunction(
+    name = "wheat_sow_date_lm",
+    fn = function(x) {
+        13.26 -0.031 * x
+    },
+    par.set = makeParamSet(
+        makeNumericVectorParam("x", len = 1L, lower = 304, upper = 379)
+    ),
+    minimize = FALSE
+)
+
+# Surrogate Model
+
+surr.km <- makeLearner("regr.km", predict.type = "se", covtype = "matern3_2", control = list(trace = FALSE))
+
+# MBOControl
+
+control <- makeMBOControl()
+control <- setMBOControlTermination(control, iters = 10)
+control <- setMBOControlInfill(control, crit = makeMBOInfillCritEI())
+
+# Start the optimization
+
+wheat_sow_run <- mbo(wheat.sow.obj.fun, learner = surr.km, control = control, show.info = TRUE)
+
+print(wheat_sow_run)
+
+# Visualization
+wheat_sow_run <- exampleRun(wheat.sow.obj.fun, learner = surr.km, control = control, show.info = FALSE)
+
+print(wheat_sow_run)
+
+previous_theme <- theme_set(theme_bw())
+plotExampleRun(wheat_sow_run, iters = c(1L, 2L, 10L), pause = FALSE)
+
+
+
+
+
+```
+
+## Multi-objective Bayesian optimization model
+
+```{r}
+
+
+
+
+
+
+```

@@ -1,6 +1,6 @@
 # Wheat model
 
-rm(list = ls())
+#rm(list = ls())
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(sp, mgcv, bamlss,BayesX,R2BayesX,sf,spdep,rio,distreg.vis)
 
@@ -17,13 +17,17 @@ library(rio)
 
 Irrig_Rev_rice_wheat <- import("data/Irrig_Rev_rice_wheat_Updated.csv")
 
-Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Longitude)))
-Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Latitude)))
+Irrig_Rev_rice_wheat$Longitude=Irrig_Rev_rice_wheat$o_largest_plot_gps_longitude
+Irrig_Rev_rice_wheat$Latitude=Irrig_Rev_rice_wheat$o_largest_plot_gps_latitude
+
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$o_largest_plot_gps_longitude)))
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$o_largest_plot_gps_latitude)))
 
 library(janitor)
 library(tidyr)
+Irrig_Rev_rice_wheat <- clean_names(Irrig_Rev_rice_wheat)
 
-
+Irrig_Rev_rice_wheat$c_q306_crop_larest_area_ha <- Irrig_Rev_rice_wheat$c_q306_crop_larest_area_acre*0.405
 Irrig_Rev_rice_wheat$harvest_day_rice <- Irrig_Rev_rice_wheat$l_crop_duration_days_rice + Irrig_Rev_rice_wheat$sowdate_fmt_rice_day
 
 shpname <- file.path(getwd(), "shp", "India_aoi_sf_sp")
@@ -48,15 +52,58 @@ K <- K[i, i]
 set.seed(321)
 library(bamlss)
 
+# Yield Model
 
 f_wheat_yield_MRF <- list(
-  l_ton_per_hectare ~ 1 + variety_type_NMWV + s(sowdate_fmt_wheat_day) + g_q5305_irrig_times + nperha + p2o5perha + s(District, bs = "mrf", xt = list("penalty" = K)) +
+  l_ton_per_hectare ~ 1 + variety_type_nmwv + s(sowdate_fmt_wheat_day) + g_q5305_irrig_times + s(nperha) + s(p2o5perha) +weedmanaged+
+    s(c_q306_crop_larest_area_ha)+d_q401_soil_texture+d_q402_drain_class+s(m_q701_hh_member)+s(m_q708_market_distance)+irrig_source+a_q112_f_edu_new+
+    population_density+wc2_1_30s_elev+sand_0_5cm+nitrogen_0_5cm+soc_5_15cm+jan_tmin_18+feb_tmin_18+mar_tmin_18+apr_tmin_18+jan_tmax_18+feb_tmax_18+
+    mar_tmax_18+apr_tmax_18+jan_prec_18+feb_prec_18+mar_prec_18+apr_prec_18+
+    s(District, bs = "mrf", xt = list("penalty" = K)) +
     s(District, bs = "re"),
-  sigma ~ 1 + variety_type_NMWV + s(sowdate_fmt_wheat_day) + g_q5305_irrig_times + nperha + p2o5perha + s(District, bs = "mrf", xt = list("penalty" = K)) +
+  sigma ~ 1 + variety_type_nmwv + s(sowdate_fmt_wheat_day) + g_q5305_irrig_times + s(nperha) + s(p2o5perha) +weedmanaged+
+    s(c_q306_crop_larest_area_ha)+d_q401_soil_texture+d_q402_drain_class+s(m_q701_hh_member)+s(m_q708_market_distance)+irrig_source+a_q112_f_edu_new + 
+    population_density+wc2_1_30s_elev+sand_0_5cm+nitrogen_0_5cm+soc_5_15cm+jan_tmin_18+feb_tmin_18+mar_tmin_18+apr_tmin_18+jan_tmax_18+feb_tmax_18+
+    mar_tmax_18+apr_tmax_18+jan_prec_18+feb_prec_18+mar_prec_18+apr_prec_18+
+    s(District, bs = "mrf", xt = list("penalty" = K)) +
     s(District, bs = "re")
 )
 set.seed(321)
 b_wheat_yield_MRF <- bamlss(f_wheat_yield_MRF, data = Irrig_Rev_rice_wheat, family = "gaussian")
+
+summary(b_wheat_yield_MRF)
+
+
+par(mfrow = c(2, 3), mar = c(4, 4, 1, 1))
+plot(b_wheat_yield_MRF, pages = 1, spar = FALSE, rug = TRUE)
+
+# Revenue model
+
+f_wheat_rev_MRF <- list(
+  revenue_wheat ~ 1 + variety_type_nmwv + s(sowdate_fmt_wheat_day) + g_q5305_irrig_times + s(nperha) + s(p2o5perha) +weedmanaged+
+    s(c_q306_crop_larest_area_ha)+d_q401_soil_texture+d_q402_drain_class+s(m_q701_hh_member)+s(m_q708_market_distance)+irrig_source+a_q112_f_edu_new+
+    population_density+wc2_1_30s_elev+sand_0_5cm+nitrogen_0_5cm+soc_5_15cm+jan_tmin_18+feb_tmin_18+mar_tmin_18+apr_tmin_18+jan_tmax_18+feb_tmax_18+
+    mar_tmax_18+apr_tmax_18+jan_prec_18+feb_prec_18+mar_prec_18+apr_prec_18+
+    s(District, bs = "mrf", xt = list("penalty" = K)) +
+    s(District, bs = "re"),
+  sigma ~ 1 + variety_type_nmwv + s(sowdate_fmt_wheat_day) + g_q5305_irrig_times + s(nperha) + s(p2o5perha) +weedmanaged+
+    s(c_q306_crop_larest_area_ha)+d_q401_soil_texture+d_q402_drain_class+s(m_q701_hh_member)+s(m_q708_market_distance)+irrig_source+a_q112_f_edu_new + 
+    population_density+wc2_1_30s_elev+sand_0_5cm+nitrogen_0_5cm+soc_5_15cm+jan_tmin_18+feb_tmin_18+mar_tmin_18+apr_tmin_18+jan_tmax_18+feb_tmax_18+
+    mar_tmax_18+apr_tmax_18+jan_prec_18+feb_prec_18+mar_prec_18+apr_prec_18+
+    s(District, bs = "mrf", xt = list("penalty" = K)) +
+    s(District, bs = "re")
+)
+set.seed(321)
+b_wheat_rev_MRF <- bamlss(f_wheat_rev_MRF, data = Irrig_Rev_rice_wheat, family = "gaussian")
+
+summary(b_wheat_rev_MRF)
+
+
+par(mfrow = c(2, 3), mar = c(4, 4, 1, 1))
+plot(b_wheat_rev_MRF, pages = 1, spar = FALSE, rug = TRUE)
+
+
+# Visualization
 
 library(distreg.vis)
 library(bamlss)
