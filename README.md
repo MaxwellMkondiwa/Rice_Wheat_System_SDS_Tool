@@ -28,7 +28,7 @@ This will produce the tool below:
 ![First page tool](Visualizer_1.png)
 
 
-
+One can also run the tool by just running the respective R code (i.e., Rice_Model.R, Wheat_Model.R and Rice_Wheat_Model.R). 
 
 ### Mimicking Bayesian Optimization Experiment in Optimizing Rice-Wheat Cropping System
 The toolkit as it is does not optimize the system, it allows one to conduct scenario analyses including those that are suboptimal. We demonstrate how one can run multiple combinations that give the lower and upper
@@ -49,6 +49,8 @@ Iterate by adjusting the optimal amounts in the direction of optimality while ho
 
 
 ## References 
+
+For similar, see Agent Based Model by Harrison Smith, Meha Jain, Maanya Umashaanker, and Sukhwinder Singh (https://www.learngala.com/cases/growing-into-an-uncertain-future/)
 
 
 
