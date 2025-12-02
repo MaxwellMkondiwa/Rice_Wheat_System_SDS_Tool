@@ -17,11 +17,9 @@ The consists of folders for data, shapefiles (shp) and outputs. It consists of t
 After running the .bat file. Wait for some minutes, then enter following R code:
 
 
-library(distreg.vis) 
-
-library(bamlss)
-
-if (interactive()) {distreg.vis::vis()}
+**library(distreg.vis)**
+**library(bamlss)**
+**if (interactive()) {distreg.vis::vis()}**
 
 This will produce the tool below: 
 
