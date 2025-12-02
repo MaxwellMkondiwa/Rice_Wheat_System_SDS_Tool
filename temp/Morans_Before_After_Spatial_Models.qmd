@@ -1,0 +1,211 @@
+---
+title: "Morans'I checks before and after spatial models"
+format: html
+editor: visual
+---
+
+# Packages
+
+```{r}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(sp,sf, mgcv, bamlss,BayesX,R2BayesX,sf,spdep,rio,distreg.vis)
+
+# Multivariate geoadditive model
+# remotes::install_git("https://git.uibk.ac.at/c4031039/mvnchol")
+
+library(sp)
+library (mgcv)
+library(mvnchol)
+library(BayesX)
+library(sf)
+
+load("Working_space_Oct26_2025_yield_rev_non_struct_model.RData")
+
+
+```
+
+# Morans I for raw data
+
+```{r}
+library(sp)
+Irrig_Rev_rice_wheat_sp= SpatialPointsDataFrame(cbind(Irrig_Rev_rice_wheat$longitude,Irrig_Rev_rice_wheat$latitude),data=Irrig_Rev_rice_wheat,proj4string=CRS("+proj=longlat +datum=WGS84"))
+
+Irrig_Rev_rice_wheat_sf=st_as_sf(Irrig_Rev_rice_wheat_sp)
+
+ea.coord<-cbind(Irrig_Rev_rice_wheat_sf$longitude,Irrig_Rev_rice_wheat_sf$latitude)
+
+###CREATING DISTANCE BASED SPATIAL MATRICES
+#k nearest neighours#
+ea.20nn <-knearneigh(ea.coord, k=20, longlat = TRUE)
+ea.20nn.nb <- knn2nb(ea.20nn)
+
+###Plotting the k nearest neighours
+
+plot(ea.20nn.nb, ea.coord)
+plot(ea.20nn.nb, ea.coord, add=TRUE, col="blue")
+title(main = " k=20 neighberhod")
+
+
+
+
+
+```
+
+## Wheat
+
+```{r}
+
+#Converting weight to matrix 
+Wnn20rs<-nb2listw(ea.20nn.nb)
+
+##Viewing the weights in a matrix
+W20<-listw2mat(Wnn20rs) 
+
+## back to 'listw'
+list.W20<- mat2listw(W20, style="W")
+
+moran.test (Irrig_Rev_rice_wheat_sp$l_ton_per_hectare,list.W20, alter="two.sided", zero.policy=T, randomisation=FALSE)
+
+# We reject the null of no spatial autocorrelation
+
+# Moran's I scatter plot
+moran.plot(Irrig_Rev_rice_wheat_sp$l_ton_per_hectare,list.W20,col = "skyblue",main="Moran's I plot of wheat yields", xlab = "Wheat yield", ylab = "Spatially lagged wheat yield")
+
+
+
+```
+
+## Rice
+
+```{r}
+moran.test (Irrig_Rev_rice_wheat_sp$b_grain_yield_ton_per_ha_rice,list.W20, alter="two.sided", zero.policy=T, randomisation=FALSE)
+
+# We reject the null of no spatial autocorrelation
+
+# Moran's I scatter plot
+moran.plot(Irrig_Rev_rice_wheat_sp$b_grain_yield_ton_per_ha_rice,list.W20,col = "skyblue",main="Moran's I plot of rice yield", xlab = "Rice yield", ylab = "Spatially lagged rice yield")
+
+
+
+
+
+
+```
+
+## Total revenues
+
+```{r}
+
+moran.test (Irrig_Rev_rice_wheat_sp$revenue_wheat_rice,list.W20, alter="two.sided", zero.policy=T, randomisation=FALSE)
+
+# We reject the null of no spatial autocorrelation
+
+# Moran's I scatter plot
+moran.plot(Irrig_Rev_rice_wheat_sp$revenue_wheat_rice,list.W20,col = "skyblue",main="Moran's I plot of system revues", xlab = "Total revenues", ylab = "Spatially lagged total revenues")
+
+
+
+```
+
+# Moran's I after spatial models
+
+## Geoadditive models without variables and without spatial variables
+```{r}
+
+library(bamlss)
+
+# Merge yield model pred to data
+Irrig_Rev_rice_wheat_sp_yield_modeldt=cbind(Irrig_Rev_rice_wheat_sp@data,biv_gauss_yield_model_pred)
+
+Irrig_Rev_rice_wheat_sp_yield_modeldt_sp= SpatialPointsDataFrame(cbind(Irrig_Rev_rice_wheat_sp_yield_modeldt$longitude,Irrig_Rev_rice_wheat_sp_yield_modeldt$latitude),data=Irrig_Rev_rice_wheat_sp_yield_modeldt,proj4string=CRS("+proj=longlat +datum=WGS84"))
+
+ea.coord2<-cbind(Irrig_Rev_rice_wheat_sp_yield_modeldt_sp$longitude,Irrig_Rev_rice_wheat_sp_yield_modeldt_sp$latitude)
+
+###CREATING DISTANCE BASED SPATIAL MATRICES
+#k nearest neighours#
+ea.20nn2 <-knearneigh(ea.coord2, k=20, longlat = TRUE)
+ea.20nn.nb2 <- knn2nb(ea.20nn2)
+
+
+#Converting weight to matrix 
+Wnn20rs2<-nb2listw(ea.20nn.nb2)
+
+##Viewing the weights in a matrix
+W202<-listw2mat(Wnn20rs2) 
+
+## back to 'listw'
+list.W202<- mat2listw(W202, style="W")
+
+Irrig_Rev_rice_wheat_sp_yield_modeldt_sp$res_rice=Irrig_Rev_rice_wheat_sp_yield_modeldt_sp$b_grain_yield_ton_per_ha_rice-Irrig_Rev_rice_wheat_sp_yield_modeldt_sp$mu1
+
+moran.test (Irrig_Rev_rice_wheat_sp_yield_modeldt_sp$res_rice,list.W202, alter="two.sided", zero.policy=T, randomisation=FALSE)
+
+
+
+# Moran's I scatter plot
+moran.plot(Irrig_Rev_rice_wheat_sp_yield_modeldt_sp$res_rice,list.W202,col = "skyblue")
+# 
+
+
+
+```
+
+## Geoadditive models with variables and with spatial variables
+
+```{r}
+#### Full model
+selected_vars=names(biv_gauss_yld_non_struct$model.frame)
+ 
+selected_vars2=c(selected_vars,"latitude","longitude")
+
+selected_dt=Irrig_Rev_rice_wheat_sf[,selected_vars2]
+
+Irrig_Rev_rice_wheat_sp_nonstruct=na.omit(selected_dt)
+
+Irrig_Rev_rice_wheat_sp_nonstruct=as_Spatial(Irrig_Rev_rice_wheat_sp_nonstruct)
+
+Irrig_Rev_rice_wheat_sp_nonstruct_modeldt=cbind(Irrig_Rev_rice_wheat_sp_nonstruct@data,biv_gauss_yld_non_struct_pred)
+
+Irrig_Rev_rice_wheat_sp_nonstruct_modeldt_sp= SpatialPointsDataFrame(cbind(Irrig_Rev_rice_wheat_sp_nonstruct_modeldt$longitude,Irrig_Rev_rice_wheat_sp_nonstruct_modeldt$latitude),data=Irrig_Rev_rice_wheat_sp_nonstruct_modeldt,proj4string=CRS("+proj=longlat +datum=WGS84"))
+
+ea.coord2<-cbind(Irrig_Rev_rice_wheat_sp_nonstruct_modeldt_sp$longitude,Irrig_Rev_rice_wheat_sp_nonstruct_modeldt_sp$latitude)
+
+###CREATING DISTANCE BASED SPATIAL MATRICES
+#k nearest neighours#
+ea.20nn2 <-knearneigh(ea.coord2, k=20, longlat = TRUE)
+ea.20nn.nb2 <- knn2nb(ea.20nn2)
+
+
+#Converting weight to matrix 
+Wnn20rs2<-nb2listw(ea.20nn.nb2)
+
+##Viewing the weights in a matrix
+W202<-listw2mat(Wnn20rs2) 
+
+## back to 'listw'
+list.W202<- mat2listw(W202, style="W")
+
+Irrig_Rev_rice_wheat_sp_nonstruct_modeldt_sp$res_rice=Irrig_Rev_rice_wheat_sp_nonstruct_modeldt_sp$b_grain_yield_ton_per_ha_rice-Irrig_Rev_rice_wheat_sp_nonstruct_modeldt_sp$mu1
+
+moran.test (Irrig_Rev_rice_wheat_sp_nonstruct_modeldt_sp$res_rice,list.W202, alter="two.sided", zero.policy=T, randomisation=FALSE)
+
+
+
+# Moran's I scatter plot
+moran.plot(Irrig_Rev_rice_wheat_sp_nonstruct_modeldt_sp$res_rice,list.W202,col = "skyblue", ,main="Moran's I plot of residuals for rice spatial submodel", xlab = "Residuals in rice spatial submodel", ylab = "Spatially lagged residuals in rice spatial submodel")
+
+# Wheat
+Irrig_Rev_rice_wheat_sp_nonstruct_modeldt_sp$res_wheat=Irrig_Rev_rice_wheat_sp_nonstruct_modeldt_sp$l_ton_per_hectare-Irrig_Rev_rice_wheat_sp_nonstruct_modeldt_sp$mu2
+
+moran.test (Irrig_Rev_rice_wheat_sp_nonstruct_modeldt_sp$res_wheat,list.W202, alter="two.sided", zero.policy=T, randomisation=FALSE)
+
+
+
+# Moran's I scatter plot
+moran.plot(Irrig_Rev_rice_wheat_sp_nonstruct_modeldt_sp$res_wheat,list.W202,col = "skyblue", ,main="Moran's I plot of residuals for wheat spatial submodel", xlab = "Residuals in wheat spatial submodel", ylab = "Spatially lagged residuals in wheat spatial submodel")
+
+
+
+
+
+```

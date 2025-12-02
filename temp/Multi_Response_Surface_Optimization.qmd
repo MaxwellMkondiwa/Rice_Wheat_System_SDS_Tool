@@ -1,0 +1,294 @@
+---
+title: "Multi-response surface optimization"
+format: html
+editor: visual
+---
+
+# Introduction
+
+# Response surface optimization
+
+```{r}
+
+
+
+
+
+
+```
+
+# Multi-response surface optimization
+
+```{r}
+
+
+library(desirability)
+
+rice_yield <- function(x) 2.5 + 0.0002* x[1] + 0.0135* x[2]+ 0.001* x[3]-0.000035*x[1]*x[3]
+
+wheat_yield <- function(x) 7.6 - 0.01708* x[1] + 0.35* x[2]+ 0.027* x[3]-0.000079*x[1]*x[3]
+
+
+plotGrid <- expand.grid(sowingtime = seq(150, 380, length = 50), 
+                        Irrig = seq(1, 12, length =4  ), 
+                        N = seq(50, 250, length = 50))
+
+plotGrid$rice_yield <- apply(plotGrid[, 1:3], 1, rice_yield )
+plotGrid$wheat_yield <- apply(plotGrid[, 1:3], 1, wheat_yield)
+
+library(lattice)
+textInfo <- trellis.par.get("add.text")
+textInfo$cex <- .7
+trellis.par.set("add.text", textInfo)
+print(contourplot(rice_yield  ~ sowingtime + N|Irrig, plotGrid, aspect = 1, as.table = TRUE))
+
+print(contourplot(wheat_yield  ~ sowingtime + N|Irrig, plotGrid, aspect = 1, as.table = TRUE))
+
+
+rice_yield_D <- dMax(1, 4.7)
+wheat_yield_D <- dTarget(3,5,8)
+predOutcomes <- c(rice_yield(c(150,8,100)), wheat_yield(c(304,3,100)))
+print(predOutcomes)
+
+
+# 
+predict(rice_yield_D, predOutcomes[1])
+predict(wheat_yield_D, predOutcomes[2])
+overallD <- dOverall(rice_yield_D, wheat_yield_D)
+print(overallD)
+predict(overallD, predOutcomes)
+
+
+dValues <- predict(overallD, plotGrid[, 4:5], all = TRUE)
+plotGrid <- cbind(plotGrid, dValues)
+
+print(contourplot(D1 ~ sowingtime + N|Irrig, plotGrid, aspect = 1, as.table = TRUE))
+
+print(contourplot(D2 ~ sowingtime + N|Irrig, plotGrid, aspect = 1, as.table = TRUE))
+
+print(contourplot(Overall ~ sowingtime + N|Irrig, plotGrid, aspect = 1, as.table = TRUE))
+
+
+# Nelder-Mead simplex
+rsmOpt <- function(x, dObject, space = "square")
+ {
+ conv <- rice_yield(x)
+ acty <- wheat_yield(x)
+
+ out <- predict(dObject, data.frame(conv = conv, acty = acty))
+
+ if(space == "circular")
+ {
+ if(sqrt(sum(x^2)) > 370) out <- 0
+ } else if(space == "square") if(any(abs(x) > 370)) out <- 0
+ out
+}
+
+
+# Nelder-Mean simplex method and a cubiodal design region
+
+searchGrid <- expand.grid(sowingtime = seq(150, 380, length = 5), 
+                        Irrig = seq(1, 12, length = 5), 
+                        N = seq(50, 250, length = 5))
+for(i in 1:dim(searchGrid)[1])
+ {
+ tmp <- optim(as.vector(searchGrid[i,]),
+ rsmOpt,
+ dObject = overallD,
+ space = "square",
+ control = list(fnscale = -1))
+ if(i == 1)
+ {
+ best <- tmp
+  } else {
+ if(tmp$value > best$value) best <- tmp
+ }
+ }
+print(best)
+
+
+for(i in 1:dim(searchGrid)[1])
+ {
+ tmp <- optim(as.vector(searchGrid[i,]),
+ rsmOpt,
+ dObject = overallD,
+ space = "circular",
+ control = list(fnscale = -1))
+ if(i == 1)
+ {
+ best <- tmp
+  } else {
+ if(tmp$value > best$value) best <- tmp
+ }
+ }
+print(best)
+
+
+library(lattice)
+textInfo <- trellis.par.get("add.text")
+textInfo$cex <- .7
+trellis.par.set("add.text", textInfo)
+
+#print(contourplot(rice_yield ~ x + catalyst|temperature, plotGrid, aspect = 1, as.table = TRUE))
+
+
+```
+
+# Confidence regions: OptimaRegion
+
+```{r}
+
+library(OptimaRegion)
+
+
+
+
+
+```
+
+# Bayesian optimization model
+
+## Rice Bayesian optimization model
+
+```{r}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(sp, mgcv, bamlss,BayesX,R2BayesX,sf,spdep,rio,distreg.vis)
+
+# Multivariate geoadditive model
+# remotes::install_git("https://git.uibk.ac.at/c4031039/mvnchol")
+#
+library(mvnchol)
+library(BayesX)
+library(R2BayesX)
+library(sf)
+library(spdep)
+library(rio)
+
+Irrig_Rev_rice_wheat <- import("data/Irrig_Rev_rice_wheat_Updated.csv")
+
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Longitude)))
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Latitude)))
+
+library(janitor)
+library(tidyr)
+
+
+Irrig_Rev_rice_wheat$harvest_day_rice <- Irrig_Rev_rice_wheat$l_crop_duration_days_rice + Irrig_Rev_rice_wheat$sowdate_fmt_rice_day
+
+# Bayesian optimization procedure
+library(mlrMBO)
+library(mlr3)
+library(ggplot2)
+library(smoof)
+
+## Run a  model
+rice_sow_model <- lm(b_grain_yield_ton_per_ha_rice ~ sowdate_fmt_rice_day, data = Irrig_Rev_rice_wheat)
+summary(rice_sow_model)
+
+rice.sow.obj.fun <- makeSingleObjectiveFunction(
+    name = "rice_sow_date_lm",
+    fn = function(x) {
+        3.967 + 0.00022 * x
+    },
+    par.set = makeParamSet(
+        makeNumericVectorParam("x", len = 1L, lower = 147, upper = 242)
+    ),
+    minimize = FALSE
+)
+
+# Surrogate Model
+
+surr.km <- makeLearner("regr.km", predict.type = "se", covtype = "matern3_2", control = list(trace = FALSE))
+
+# MBOControl
+
+control <- makeMBOControl()
+control <- setMBOControlTermination(control, iters = 10)
+control <- setMBOControlInfill(control, crit = makeMBOInfillCritEI())
+
+# Start the optimization
+
+rice_sow_run <- mbo(rice.sow.obj.fun, learner = surr.km, control = control, show.info = TRUE)
+
+print(rice_sow_run)
+
+# Visualization
+rice_sow_run <- exampleRun(rice.sow.obj.fun, learner = surr.km, control = control, show.info = FALSE)
+
+print(rice_sow_run)
+
+previous_theme <- theme_set(theme_bw())
+plotExampleRun(rice_sow_run, iters = c(1L, 2L, 10L), pause = FALSE)
+
+
+
+
+
+
+```
+
+## Wheat Bayesian optimization model
+
+```{r}
+
+# Bayesian optimization procedure
+library(mlrMBO)
+library(mlr3)
+library(ggplot2)
+library(smoof)
+
+## Run a  model
+wheat_sow_model <- lm(l_ton_per_hectare ~ sowdate_fmt_wheat_day, data = Irrig_Rev_rice_wheat)
+summary(wheat_sow_model)
+
+wheat.sow.obj.fun <- makeSingleObjectiveFunction(
+    name = "wheat_sow_date_lm",
+    fn = function(x) {
+        13.26 -0.031 * x
+    },
+    par.set = makeParamSet(
+        makeNumericVectorParam("x", len = 1L, lower = 304, upper = 379)
+    ),
+    minimize = FALSE
+)
+
+# Surrogate Model
+
+surr.km <- makeLearner("regr.km", predict.type = "se", covtype = "matern3_2", control = list(trace = FALSE))
+
+# MBOControl
+
+control <- makeMBOControl()
+control <- setMBOControlTermination(control, iters = 10)
+control <- setMBOControlInfill(control, crit = makeMBOInfillCritEI())
+
+# Start the optimization
+
+wheat_sow_run <- mbo(wheat.sow.obj.fun, learner = surr.km, control = control, show.info = TRUE)
+
+print(wheat_sow_run)
+
+# Visualization
+wheat_sow_run <- exampleRun(wheat.sow.obj.fun, learner = surr.km, control = control, show.info = FALSE)
+
+print(wheat_sow_run)
+
+previous_theme <- theme_set(theme_bw())
+plotExampleRun(wheat_sow_run, iters = c(1L, 2L, 10L), pause = FALSE)
+
+
+
+
+
+```
+
+## Multi-objective Bayesian optimization model
+
+```{r}
+
+
+
+
+
+
+```

@@ -1,0 +1,161 @@
+---
+title: "Rice-wheat system copula multivariate analysis"
+format: 
+    html:
+      code-fold: true
+      code-tools: true
+fig-dpi: 300
+fig-align: center
+
+self-contained: true
+author: Maxwell Mkondiwa
+editor: visual
+toc: true
+toc-location: left
+number-sections: true
+execute: 
+  message: false
+  warning: false
+  echo: true
+---
+
+## 
+
+# Introduction
+
+# Exploratory
+
+```{r}
+library(GJRM)
+library(dsfa)
+
+#rm(list = ls())
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(sp, mgcv, bamlss,BayesX,R2BayesX,sf,spdep,rio,distreg.vis)
+
+setwd("C:/Users/MMKONDIWA/OneDrive - CIMMYT/Documents/GitHub/Rice_Wheat_System_SDS_Tool")
+# Multivariate geoadditive model
+# remotes::install_git("https://git.uibk.ac.at/c4031039/mvnchol")
+#
+library(sp)
+library (mgcv)
+library(mvnchol)
+library(BayesX)
+library(R2BayesX)
+library(sf)
+library(spdep)
+library(rio)
+
+Irrig_Rev_rice_wheat <- import("data/Irrig_Rev_rice_wheat_Updated.csv")
+
+Irrig_Rev_rice_wheat$Longitude=Irrig_Rev_rice_wheat$o_largest_plot_gps_longitude
+Irrig_Rev_rice_wheat$Latitude=Irrig_Rev_rice_wheat$o_largest_plot_gps_latitude
+
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Longitude)))
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Latitude)))
+
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$o_largest_plot_gps_longitude)))
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$o_largest_plot_gps_latitude)))
+
+library(janitor)
+library(tidyr)
+
+
+Irrig_Rev_rice_wheat <- clean_names(Irrig_Rev_rice_wheat)
+
+Irrig_Rev_rice_wheat$c_q306_crop_larest_area_ha <- Irrig_Rev_rice_wheat$c_q306_crop_larest_area_acre*0.405
+
+Irrig_Rev_rice_wheat$harvest_day_rice <- Irrig_Rev_rice_wheat$l_crop_duration_days_rice + Irrig_Rev_rice_wheat$sowdate_fmt_rice_day
+
+
+shpname <- file.path(getwd(), "shp", "India_aoi_sf_sp")
+
+India_aoi_sp_bnd <- BayesX::shp2bnd(shpname = shpname, regionnames = "District", check.is.in = F)
+
+# Multivariate geoadditive model
+# remotes::install_git("https://git.uibk.ac.at/c4031039/mvnchol")
+# install_github("https://github.com/meteosimon/mvnchol")
+library(mvnchol)
+
+# Remove NAs in the monsoon variables
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$onset_2017)))
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$monsoon_onset_dev)))
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$median_onset_82_15)))
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$sd_onset_82_15)))
+
+
+K <- neighbormatrix(India_aoi_sp_bnd)
+head(K)
+
+## Also need to transform to factor for
+## setting up the MRF smooth.
+Irrig_Rev_rice_wheat$District <- as.factor(Irrig_Rev_rice_wheat$a_q103_district)
+
+## Now note that not all regions are observed,
+## therefore we need to remove those regions
+## from the penalty matrix
+rn <- rownames(K)
+lv <- levels(Irrig_Rev_rice_wheat$District)
+i <- rn %in% lv
+K <- K[i, i]
+
+set.seed(321)
+library(bamlss)
+
+nd <- data.frame("District" = unique(Irrig_Rev_rice_wheat$District))
+
+
+
+
+rice_no_vars <- b_grain_yield_ton_per_ha_rice ~ 1
+wheat_no_vars <- l_ton_per_hectare ~ 1
+
+rice_wheat_no_vars <- list(rice_no_vars,wheat_no_vars)
+
+copula_r_w <- gjrm (rice_wheat_no_vars, data=Irrig_Rev_rice_wheat,model="B",margins=c("N","N"))
+
+
+summary(copula_r_w)
+
+
+
+```
+
+# Spatial model
+
+```{r}
+
+copula_r_w <- gjrm (rice_wheat_no_vars, data=Irrig_Rev_rice_wheat,model="B",margins=c("N","N"))
+
+
+summary(copula_r_w)
+
+
+# Using bamlss R package
+## Formulas
+biv_gauss_yield<- list(
+  b_grain_yield_ton_per_ha_rice ~ 1, 
+  l_ton_per_hectare ~ 1, 
+  sigma1 ~ 1, 
+  sigma2 ~ 1,
+  rho ~ 1
+)
+
+## Model fitting
+biv_gauss_yield_model <- bamlss(biv_gauss_yield, family = bamlss:::bivnorm_bamlss, data = Irrig_Rev_rice_wheat,
+  burnin = 2000, thin = 10, n.iter = 12000, sampler = TRUE, nu = 1)
+
+
+summary(biv_gauss_yield_model)
+
+## Using bamlss copula
+copu_yield<- list(
+  b_grain_yield_ton_per_ha_rice ~ 1, 
+  l_ton_per_hectare ~ 1, 
+)
+copula_bamlss_yield_model <- bamlss(copu_yield, family = bamlss:::copula, data = Irrig_Rev_rice_wheat,
+  burnin = 2000, thin = 10, n.iter = 12000, sampler = TRUE, nu = 1)
+
+copula_bamlss_yield_model
+
+```

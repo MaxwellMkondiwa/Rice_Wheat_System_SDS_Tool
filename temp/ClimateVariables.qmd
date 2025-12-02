@@ -1,0 +1,382 @@
+---
+title: "Extract climate variables"
+format: html
+editor: visual
+---
+
+# Introduction
+
+# Import the raster files
+
+```{r}
+# load the `ncdf4` and the `CFtime` packages
+library(ncdf4)
+library(lattice)
+library(RColorBrewer)
+library(rasterVis)
+library(raster)
+library(colorspace)
+library(RColorBrewer)
+library(ggplot2)
+library(ggpubr)
+library(reshape2)
+library(tidyverse)
+library(ggtext)
+library(plyr)
+library(terra)
+library(rio)
+library(terra)
+library(sf)
+
+# prec
+Prec_monthly_2016 <- rast("EUP_Bihar_CHIRPSClimatedata/Prec_monthly_2016.tif")
+
+Prec_monthly_2017 <- rast("EUP_Bihar_CHIRPSClimatedata/Prec_monthly_2017.tif")
+
+Prec_monthly_2018 <- rast("EUP_Bihar_CHIRPSClimatedata/Prec_monthly_2018.tif")
+
+Prec_monthly_2019 <- rast("EUP_Bihar_CHIRPSClimatedata/Prec_monthly_2019.tif")
+
+Prec_monthly_2020 <- rast("EUP_Bihar_CHIRPSClimatedata/Prec_monthly_2020.tif")
+
+Prec_monthly_2021 <- rast("EUP_Bihar_CHIRPSClimatedata/Prec_monthly_2021.tif")
+
+# tmin
+Tmin_monthly_2016 <- rast("EUP_Bihar_CHIRPSClimatedata/Tmin_monthly_2016.tif")
+
+Tmin_monthly_2017 <- rast("EUP_Bihar_CHIRPSClimatedata/Tmin_monthly_2017.tif")
+
+Tmin_monthly_2018 <- rast("EUP_Bihar_CHIRPSClimatedata/Tmin_monthly_2018.tif")
+
+Tmin_monthly_2019 <- rast("EUP_Bihar_CHIRPSClimatedata/Tmin_monthly_2019.tif")
+
+Tmin_monthly_2020 <- rast("EUP_Bihar_CHIRPSClimatedata/Tmin_monthly_2020.tif")
+
+Tmin_monthly_2021 <- rast("EUP_Bihar_CHIRPSClimatedata/Tmin_monthly_2021.tif")
+
+
+# tmax
+Tmax_monthly_2016 <- rast("EUP_Bihar_CHIRPSClimatedata/Tmax_monthly_2016.tif")
+
+Tmax_monthly_2017 <- rast("EUP_Bihar_CHIRPSClimatedata/Tmax_monthly_2017.tif")
+
+Tmax_monthly_2018 <- rast("EUP_Bihar_CHIRPSClimatedata/Tmax_monthly_2018.tif")
+
+Tmax_monthly_2019 <- rast("EUP_Bihar_CHIRPSClimatedata/Tmax_monthly_2019.tif")
+
+Tmax_monthly_2020 <- rast("EUP_Bihar_CHIRPSClimatedata/Tmax_monthly_2020.tif")
+
+Tmax_monthly_2021 <- rast("EUP_Bihar_CHIRPSClimatedata/Tmax_monthly_2021.tif")
+
+rasterlist <- list(Prec_monthly_2016, Prec_monthly_2017, Prec_monthly_2018, Prec_monthly_2019, Prec_monthly_2020, Prec_monthly_2021, Tmin_monthly_2016, Tmin_monthly_2017, Tmin_monthly_2018, Tmin_monthly_2019, Tmin_monthly_2020, Tmin_monthly_2021, Tmax_monthly_2016, Tmax_monthly_2017, Tmax_monthly_2018, Tmax_monthly_2019, Tmax_monthly_2020, Tmax_monthly_2021)
+
+# rasterlist_stack <- raster::stark(rasterlist)
+Irrig_Rev_rice_wheat <- import("data/Irrig_Rev_rice_wheat.csv")
+
+Irrig_Rev_rice_wheat$Latitude <- Irrig_Rev_rice_wheat$o_largest_plot_gps_latitude
+Irrig_Rev_rice_wheat$Longitude <- Irrig_Rev_rice_wheat$o_largest_plot_gps_longitude
+
+Irrig_Rev_rice_wheat$Longitude <- as.numeric(Irrig_Rev_rice_wheat$Longitude)
+Irrig_Rev_rice_wheat$Latitude <- as.numeric(Irrig_Rev_rice_wheat$Latitude)
+
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Longitude)))
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Latitude)))
+Irrig_Rev_rice_wheat_sp <- SpatialPointsDataFrame(cbind(Irrig_Rev_rice_wheat$Longitude, Irrig_Rev_rice_wheat$Latitude), data = Irrig_Rev_rice_wheat, proj4string = CRS("+proj=longlat +datum=WGS84"))
+
+Irrig_Rev_rice_wheat_sf <- st_as_sf(Irrig_Rev_rice_wheat_sp)
+
+# temp_prec_extract <- terra::extract(rasterlist_stack, Irrig_Rev_rice_wheat_sf, fun = mean, df = TRUE)
+```
+
+# Prec, min and max
+
+```{r}
+# Function to add Geo-variables
+
+library(sf)
+library(sp)
+library(terra)
+library(raster)
+library(geodata)
+
+library(tidyverse)
+library(rio)
+Irrig_Rev_rice_wheat <- read.csv("data/Irrig_Rev_rice_wheat.csv")
+
+Irrig_Rev_rice_wheat$Latitude <- Irrig_Rev_rice_wheat$o_largest_plot_gps_latitude
+Irrig_Rev_rice_wheat$Longitude <- Irrig_Rev_rice_wheat$o_largest_plot_gps_longitude
+
+Irrig_Rev_rice_wheat$Longitude <- as.numeric(Irrig_Rev_rice_wheat$Longitude)
+Irrig_Rev_rice_wheat$Latitude <- as.numeric(Irrig_Rev_rice_wheat$Latitude)
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Longitude)))
+Irrig_Rev_rice_wheat <- subset(Irrig_Rev_rice_wheat, !(is.na(Irrig_Rev_rice_wheat$Latitude)))
+
+add_secondary_kvk <- function(df) {
+    # Remove duplicates and NAs in geo-coordinates
+    # df=subset(df,!(duplicated(df$Longitude)))
+    # df=subset(df,!(duplicated(df$Latitude)))
+    df$Longitude <- as.numeric(df$Longitude)
+    df$Latitude <- as.numeric(df$Latitude)
+    df <- subset(df, !(is.na(df$Longitude)))
+    df <- subset(df, !(is.na(df$Latitude)))
+    df_sp <- SpatialPointsDataFrame(cbind(df$Longitude, df$Latitude), data = df, proj4string = CRS("+proj=longlat +datum=WGS84"))
+
+    df_sf <- st_as_sf(df_sp)
+
+    # df_sf_17=subset(df_sf,df_sf$Year=="2016-17")
+    # df_sf_18=subset(df_sf,df_sf$Year=="2017-18")
+    # df_sf_19=subset(df_sf,df_sf$Year=="2018-19")
+    # df_sf_20=subset(df_sf,df_sf$Year=="2019-20")
+    # df_sf_21=subset(df_sf,df_sf$Year=="2020-21")
+
+    # Precipitation
+    prec_2016 <- terra::extract(Prec_monthly_2016, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+    prec_2017 <- terra::extract(Prec_monthly_2017, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+    prec_2018 <- terra::extract(Prec_monthly_2018, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+    prec_2019 <- terra::extract(Prec_monthly_2019, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+    prec_2020 <- terra::extract(Prec_monthly_2020, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+    prec_2021 <- terra::extract(Prec_monthly_2021, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+
+    # Min temperature
+    tmin_2016 <- terra::extract(Tmin_monthly_2016, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+    tmin_2017 <- terra::extract(Tmin_monthly_2017, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+    tmin_2018 <- terra::extract(Tmin_monthly_2018, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+    tmin_2019 <- terra::extract(Tmin_monthly_2019, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+    tmin_2020 <- terra::extract(Tmin_monthly_2020, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+    tmin_2021 <- terra::extract(Tmin_monthly_2021, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+
+    # Max temperature
+    tmax_2016 <- terra::extract(Tmax_monthly_2016, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+    tmax_2017 <- terra::extract(Tmax_monthly_2017, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+    tmax_2018 <- terra::extract(Tmax_monthly_2018, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+    tmax_2019 <- terra::extract(Tmax_monthly_2019, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+    tmax_2020 <- terra::extract(Tmax_monthly_2020, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+    tmax_2021 <- terra::extract(Tmax_monthly_2021, vect(df_sf), na.rm = TRUE, fun = mean, df = TRUE, buffer = 5000)
+
+
+    # Merge all soils and population
+    geodata_df <- list(
+        prec_2016, prec_2017, prec_2018, prec_2019, prec_2020, prec_2021,
+        tmin_2016, tmin_2017, tmin_2018, tmin_2019, tmin_2020, tmin_2021,
+        tmax_2016, tmax_2017, tmax_2018, tmax_2019, tmax_2020, tmax_2021
+    )
+
+    geodata_df <- Reduce(function(x, y) merge(x, y, all = TRUE), geodata_df)
+    # geodata_df=return(data.frame(geodata_df))
+
+    write.csv(geodata_df, paste0("prec_max_min_tem", ".csv"))
+
+    write.csv(prec_2016, paste0("prec_2016", ".csv"))
+    write.csv(prec_2017, paste0("prec_2017", ".csv"))
+    write.csv(prec_2018, paste0("prec_2018", ".csv"))
+    write.csv(prec_2019, paste0("prec_2019", ".csv"))
+    write.csv(prec_2020, paste0("prec_2020", ".csv"))
+    write.csv(prec_2021, paste0("prec_2021", ".csv"))
+
+    write.csv(tmin_2016, paste0("tmin_2016", ".csv"))
+    write.csv(tmin_2017, paste0("tmin_2017", ".csv"))
+    write.csv(tmin_2018, paste0("tmin_2018", ".csv"))
+    write.csv(tmin_2019, paste0("tmin_2019", ".csv"))
+    write.csv(tmin_2020, paste0("tmin_2020", ".csv"))
+    write.csv(tmin_2021, paste0("tmin_2021", ".csv"))
+
+    write.csv(tmax_2016, paste0("tmax_2016", ".csv"))
+    write.csv(tmax_2017, paste0("tmax_2017", ".csv"))
+    write.csv(tmax_2018, paste0("tmax_2018", ".csv"))
+    write.csv(tmax_2019, paste0("tmax_2019", ".csv"))
+    write.csv(tmax_2020, paste0("tmax_2020", ".csv"))
+    write.csv(tmax_2021, paste0("tmax_2021", ".csv"))
+}
+add_secondary_kvk(Irrig_Rev_rice_wheat)
+```
+
+# Import the tables
+
+```{r}
+prec_2016 <- read.csv("prec_2016.csv")
+colnames(prec_2016) <- paste0(colnames(prec_2016), "_prec_16")
+
+prec_2017 <- read.csv("prec_2017.csv")
+colnames(prec_2017) <- paste0(colnames(prec_2017), "_prec_17")
+
+prec_2018 <- read.csv("prec_2018.csv")
+colnames(prec_2018) <- paste0(colnames(prec_2018), "_prec_18")
+
+prec_2019 <- read.csv("prec_2019.csv")
+colnames(prec_2019) <- paste0(colnames(prec_2019), "_prec_19")
+
+prec_2020 <- read.csv("prec_2020.csv")
+colnames(prec_2020) <- paste0(colnames(prec_2020), "_prec_20")
+
+prec_2021 <- read.csv("prec_2021.csv")
+colnames(prec_2021) <- paste0(colnames(prec_2021), "_prec_21")
+
+prec_2016_21 <- cbind(prec_2016, prec_2017, prec_2018, prec_2019, prec_2020, prec_2021)
+
+Irrig_Rev_rice_wheat <- cbind(Irrig_Rev_rice_wheat, prec_2016_21)
+
+
+# tmin
+
+tmin_2016 <- read.csv("tmin_2016.csv")
+colnames(tmin_2016) <- paste0(colnames(tmin_2016), "_tmin_16")
+
+tmin_2017 <- read.csv("tmin_2017.csv")
+colnames(tmin_2017) <- paste0(colnames(tmin_2017), "_tmin_17")
+
+tmin_2018 <- read.csv("tmin_2018.csv")
+colnames(tmin_2018) <- paste0(colnames(tmin_2018), "_tmin_18")
+
+tmin_2019 <- read.csv("tmin_2019.csv")
+colnames(tmin_2019) <- paste0(colnames(tmin_2019), "_tmin_19")
+
+tmin_2020 <- read.csv("tmin_2020.csv")
+colnames(tmin_2020) <- paste0(colnames(tmin_2020), "_tmin_20")
+
+tmin_2021 <- read.csv("tmin_2021.csv")
+colnames(tmin_2021) <- paste0(colnames(tmin_2021), "_tmin_21")
+
+tmin_2016_21 <- cbind(tmin_2016, tmin_2017, tmin_2018, tmin_2019, tmin_2020, tmin_2021)
+
+Irrig_Rev_rice_wheat <- cbind(Irrig_Rev_rice_wheat, tmin_2016_21)
+
+
+# Tmax
+
+tmax_2016 <- read.csv("tmax_2016.csv")
+colnames(tmax_2016) <- paste0(colnames(tmax_2016), "_tmax_16")
+
+tmax_2017 <- read.csv("tmax_2017.csv")
+colnames(tmax_2017) <- paste0(colnames(tmax_2017), "_tmax_17")
+
+tmax_2018 <- read.csv("tmax_2018.csv")
+colnames(tmax_2018) <- paste0(colnames(tmax_2018), "_tmax_18")
+
+tmax_2019 <- read.csv("tmax_2019.csv")
+colnames(tmax_2019) <- paste0(colnames(tmax_2019), "_tmax_19")
+
+tmax_2020 <- read.csv("tmax_2020.csv")
+colnames(tmax_2020) <- paste0(colnames(tmax_2020), "_tmax_20")
+
+tmax_2021 <- read.csv("tmax_2021.csv")
+colnames(tmax_2021) <- paste0(colnames(tmax_2021), "_tmax_21")
+
+tmax_2016_21 <- cbind(tmax_2016, tmax_2017, tmax_2018, tmax_2019, tmax_2020, tmax_2021)
+
+Irrig_Rev_rice_wheat <- cbind(Irrig_Rev_rice_wheat, tmax_2016_21)
+
+# Change precipitation variables from inches to mm
+
+Irrig_Rev_rice_wheat$Jan_prec_17 <- Irrig_Rev_rice_wheat$Jan_prec_17 * 25.4
+Irrig_Rev_rice_wheat$Feb_prec_17 <- Irrig_Rev_rice_wheat$Feb_prec_17 * 25.4
+Irrig_Rev_rice_wheat$Mar_prec_17 <- Irrig_Rev_rice_wheat$Mar_prec_17 * 25.4
+Irrig_Rev_rice_wheat$Apr_prec_17 <- Irrig_Rev_rice_wheat$Apr_prec_17 * 25.4
+Irrig_Rev_rice_wheat$May_prec_17 <- Irrig_Rev_rice_wheat$May_prec_17 * 25.4
+Irrig_Rev_rice_wheat$Jun_prec_17 <- Irrig_Rev_rice_wheat$Jun_prec_17 * 25.4
+Irrig_Rev_rice_wheat$Jul_prec_17 <- Irrig_Rev_rice_wheat$Jul_prec_17 * 25.4
+Irrig_Rev_rice_wheat$Aug_prec_17 <- Irrig_Rev_rice_wheat$Aug_prec_17 * 25.4
+Irrig_Rev_rice_wheat$Sep_prec_17 <- Irrig_Rev_rice_wheat$Sep_prec_17 * 25.4
+Irrig_Rev_rice_wheat$Oct_prec_17 <- Irrig_Rev_rice_wheat$Oct_prec_17 * 25.4
+Irrig_Rev_rice_wheat$Nov_prec_17 <- Irrig_Rev_rice_wheat$Nov_prec_17 * 25.4
+Irrig_Rev_rice_wheat$Dec_prec_17 <- Irrig_Rev_rice_wheat$Dec_prec_17 * 25.4
+
+Irrig_Rev_rice_wheat$Jan_prec_18 <- Irrig_Rev_rice_wheat$Jan_prec_18 * 25.4
+Irrig_Rev_rice_wheat$Feb_prec_18 <- Irrig_Rev_rice_wheat$Feb_prec_18 * 25.4
+Irrig_Rev_rice_wheat$Mar_prec_18 <- Irrig_Rev_rice_wheat$Mar_prec_18 * 25.4
+Irrig_Rev_rice_wheat$Apr_prec_18 <- Irrig_Rev_rice_wheat$Apr_prec_18 * 25.4
+Irrig_Rev_rice_wheat$May_prec_18 <- Irrig_Rev_rice_wheat$May_prec_18 * 25.4
+Irrig_Rev_rice_wheat$Jun_prec_18 <- Irrig_Rev_rice_wheat$Jun_prec_18 * 25.4
+Irrig_Rev_rice_wheat$Jul_prec_18 <- Irrig_Rev_rice_wheat$Jul_prec_18 * 25.4
+Irrig_Rev_rice_wheat$Aug_prec_18 <- Irrig_Rev_rice_wheat$Aug_prec_18 * 25.4
+Irrig_Rev_rice_wheat$Sep_prec_18 <- Irrig_Rev_rice_wheat$Sep_prec_18 * 25.4
+Irrig_Rev_rice_wheat$Oct_prec_18 <- Irrig_Rev_rice_wheat$Oct_prec_18 * 25.4
+Irrig_Rev_rice_wheat$Nov_prec_18 <- Irrig_Rev_rice_wheat$Nov_prec_18 * 25.4
+Irrig_Rev_rice_wheat$Dec_prec_18 <- Irrig_Rev_rice_wheat$Dec_prec_18 * 25.4
+
+Irrig_Rev_rice_wheat$Jan_prec_19 <- Irrig_Rev_rice_wheat$Jan_prec_19 * 25.4
+Irrig_Rev_rice_wheat$Feb_prec_19 <- Irrig_Rev_rice_wheat$Feb_prec_19 * 25.4
+Irrig_Rev_rice_wheat$Mar_prec_19 <- Irrig_Rev_rice_wheat$Mar_prec_19 * 25.4
+Irrig_Rev_rice_wheat$Apr_prec_19 <- Irrig_Rev_rice_wheat$Apr_prec_19 * 25.4
+Irrig_Rev_rice_wheat$May_prec_19 <- Irrig_Rev_rice_wheat$May_prec_19 * 25.4
+Irrig_Rev_rice_wheat$Jun_prec_19 <- Irrig_Rev_rice_wheat$Jun_prec_19 * 25.4
+Irrig_Rev_rice_wheat$Jul_prec_19 <- Irrig_Rev_rice_wheat$Jul_prec_19 * 25.4
+Irrig_Rev_rice_wheat$Aug_prec_19 <- Irrig_Rev_rice_wheat$Aug_prec_19 * 25.4
+Irrig_Rev_rice_wheat$Sep_prec_19 <- Irrig_Rev_rice_wheat$Sep_prec_19 * 25.4
+Irrig_Rev_rice_wheat$Oct_prec_19 <- Irrig_Rev_rice_wheat$Oct_prec_19 * 25.4
+Irrig_Rev_rice_wheat$Nov_prec_19 <- Irrig_Rev_rice_wheat$Nov_prec_19 * 25.4
+Irrig_Rev_rice_wheat$Dec_prec_19 <- Irrig_Rev_rice_wheat$Dec_prec_19 * 25.4
+
+Irrig_Rev_rice_wheat$Jan_prec_20 <- Irrig_Rev_rice_wheat$Jan_prec_20* 25.4
+Irrig_Rev_rice_wheat$Feb_prec_20 <- Irrig_Rev_rice_wheat$Feb_prec_20 * 25.4
+Irrig_Rev_rice_wheat$Mar_prec_20 <- Irrig_Rev_rice_wheat$Mar_prec_20 * 25.4
+Irrig_Rev_rice_wheat$Apr_prec_20 <- Irrig_Rev_rice_wheat$Apr_prec_20 * 25.4
+Irrig_Rev_rice_wheat$May_prec_20 <- Irrig_Rev_rice_wheat$May_prec_20 * 25.4
+Irrig_Rev_rice_wheat$Jun_prec_20 <- Irrig_Rev_rice_wheat$Jun_prec_20 * 25.4
+Irrig_Rev_rice_wheat$Jul_prec_20 <- Irrig_Rev_rice_wheat$Jul_prec_20 * 25.4
+Irrig_Rev_rice_wheat$Aug_prec_20 <- Irrig_Rev_rice_wheat$Aug_prec_20 * 25.4
+Irrig_Rev_rice_wheat$Sep_prec_20 <- Irrig_Rev_rice_wheat$Sep_prec_20 * 25.4
+Irrig_Rev_rice_wheat$Oct_prec_20 <- Irrig_Rev_rice_wheat$Oct_prec_20 * 25.4
+Irrig_Rev_rice_wheat$Nov_prec_20 <- Irrig_Rev_rice_wheat$Nov_prec_20 * 25.4
+Irrig_Rev_rice_wheat$Dec_prec_20 <- Irrig_Rev_rice_wheat$Dec_prec_20 * 25.4
+
+
+
+```
+
+# Soils
+
+```{r}
+# Function to add Geo-variables
+
+library(sf)
+library(sp)
+library(terra)
+library(raster)
+library(geodata)
+
+add_secondary_lcas <- function(df) {
+    # Remove duplicates and NAs in geo-coordinates
+    # df=subset(df,!(duplicated(df$O.largestPlotGPS.Longitude)))
+    # df=subset(df,!(duplicated(df$O.largestPlotGPS.Latitude)))
+    df <- subset(df, !(is.na(df$Longitude)))
+    df <- subset(df, !(is.na(df$Latitude)))
+    df_sp <- SpatialPointsDataFrame(cbind(df$Longitude, df$Latitude), data = df, proj4string = CRS("+proj=longlat +datum=WGS84"))
+    df_sf <- st_as_sf(df_sp)
+
+    population <- population(2020, 05, path = tempdir())
+    population_geodata <- terra::extract(population, vect(df_sf), fun = mean, df = TRUE)
+    elevationglobal_geodata <- elevation_global(0.5, path = tempdir())
+    elevation_geodata <- terra::extract(elevationglobal_geodata, vect(df_sf), fun = mean, df = TRUE)
+    Soilsand <- soil_world("sand", depth = 5, path = tempdir())
+    Soilsand_lds <- terra::extract(Soilsand, vect(df_sf), fun = mean, df = TRUE)
+    Totalnitrogen <- soil_world("nitrogen", depth = 5, path = tempdir())
+    Totalnitrogen_lds <- terra::extract(Totalnitrogen, vect(df_sf), fun = mean, df = TRUE)
+    soilsoc <- soil_world("soc", depth = 15, path = tempdir())
+    soilsoc_lds <- terra::extract(soilsoc, vect(df_sf), fun = mean, df = TRUE)
+
+    # Merge all soils and population
+    # 
+    geodata_df <- list(population_geodata,elevation_geodata, Soilsand_lds, Totalnitrogen_lds, soilsoc_lds)
+    geodata_df <- Reduce(function(x, y) merge(x, y, all = TRUE), geodata_df)
+    # geodata_df=return(data.frame(geodata_df))
+    write.csv(geodata_df, paste0("geovariables", ".csv"))
+}
+add_secondary_lcas(Irrig_Rev_rice_wheat)
+
+library(rio)
+geovariables <- import("geovariables.csv")
+
+Irig_Rev_rice_wheat <- cbind(Irrig_Rev_rice_wheat, geovariables)
+
+
+
+
+
+```
+
+# Export the data
+
+```{r}
+write.csv(Irrig_Rev_rice_wheat, "Irrig_Rev_rice_wheat_Updated.csv")
+write.csv(Irrig_Rev_rice_wheat, "data/Irrig_Rev_rice_wheat_Updated.csv")
+```
