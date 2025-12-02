@@ -46,11 +46,11 @@ Iterate by adjusting the optimal amounts in the direction of optimality while ho
 
 ## Conclusion
 
-
+The current version of the visualization tool allows crop specific visualizer. For results on system level analytics, the reader is refered to Mkondiwa et al 2025 (https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5309835).
 
 ## References 
 
-For similar, see Agent Based Model by Harrison Smith, Meha Jain, Maanya Umashaanker, and Sukhwinder Singh (https://www.learngala.com/cases/growing-into-an-uncertain-future/)
+For similar applications, see an Agent Based Model visualizer by Harrison Smith, Meha Jain, Maanya Umashaanker, and Sukhwinder Singh (https://www.learngala.com/cases/growing-into-an-uncertain-future/)
 
 
 
