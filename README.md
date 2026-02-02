@@ -46,7 +46,7 @@ Iterate by adjusting the optimal amounts in the direction of optimality while ho
 
 ## Conclusion
 
-The current version of the visualization tool allows crop specific visualizer. For results on system level analytics, the reader is refered to Mkondiwa et al 2025 (https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5309835).
+The current version of the visualization tool allows crop specific visualizer. For results on system level analytics, the reader is refered to Mkondiwa et al 2026 (https://doi.org/10.1016/j.agsy.2026.104648).
 
 ## References 
 
